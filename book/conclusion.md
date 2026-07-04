@@ -16,7 +16,7 @@ evidence for the major pipeline paths.
 - direct Kafka-to-Neo4j node and edge ingestion without Spark;
 - stable-ID Cypher `MERGE`, uniqueness checks, and ordering-safe endpoint placeholders;
 - Spark consumption of `cpg.metadata.v1` with checkpointing;
-- stable-key MongoDB replacement through `foreachBatch` and PyMongo;
+- stable-key MongoDB replacement through `foreachBatch` and MongoDB Spark Connector;
 - controlled modified-file replay while Spark remained active;
 - structured `SyntaxError` publication without terminating the valid-file pipeline.
 
@@ -43,8 +43,8 @@ addressed with placeholder endpoints and a verifier that detects unresolved plac
   cross-file targets.
 - Node identity includes line and column position, so source edits may change many IDs.
 - File-level cleanup is a simple modified-file replay strategy and does not retain graph history.
-- The PyMongo write layer runs inside Spark `foreachBatch`; it is not the MongoDB connector's native
-  streaming sink.
+- MongoDB writes use connector batch replace/upsert inside `foreachBatch`; verification scripts
+  still use PyMongo for read-only checks.
 
 ## Future Improvements
 

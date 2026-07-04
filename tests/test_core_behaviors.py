@@ -6,7 +6,7 @@ from pathlib import Path
 
 from src.common.hashing import file_sha256, make_metadata_id
 from src.common.schemas import MetadataEvent
-from src.spark_jobs.metadata_to_mongodb import metadata_upsert_filter
+from src.spark_jobs.metadata_to_mongodb import build_metadata_schema, mongodb_write_options
 from src.verification.replay_one_file import set_probe_state
 
 
@@ -17,16 +17,32 @@ class CoreBehaviorTests(unittest.TestCase):
             make_metadata_id("repo", "src/example.py"),
         )
 
-    def test_upsert_filter_prefers_metadata_id(self) -> None:
-        document = {"metadata_id": "stable", "repo_name": "repo", "file_path": "x.py"}
-        self.assertEqual(metadata_upsert_filter(document), {"metadata_id": "stable"})
-
-    def test_upsert_filter_falls_back_to_repo_and_path(self) -> None:
-        document = {"repo_name": "repo", "file_path": "x.py"}
-        self.assertEqual(
-            metadata_upsert_filter(document),
-            {"repo_name": "repo", "file_path": "x.py"},
+    def test_metadata_schema_contains_required_fields(self) -> None:
+        self.assertTrue(
+            {
+                "schema_version",
+                "event_time",
+                "repo_name",
+                "file_path",
+                "metadata_id",
+                "file_hash",
+                "line_count",
+                "function_count",
+                "class_count",
+                "import_count",
+                "node_count",
+                "edge_count",
+            }.issubset(build_metadata_schema().fieldNames())
         )
+
+    def test_mongodb_connector_options_are_complete_and_idempotent(self) -> None:
+        options = mongodb_write_options()
+        self.assertTrue(options["connection.uri"])
+        self.assertTrue(options["database"])
+        self.assertTrue(options["collection"])
+        self.assertEqual(options["idFieldList"], "metadata_id")
+        self.assertEqual(options["operationType"], "replace")
+        self.assertEqual(options["upsertDocument"], "true")
 
     def test_controlled_modification_changes_hash(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

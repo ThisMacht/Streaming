@@ -1,59 +1,43 @@
-"""Stream Kafka metadata events to MongoDB with idempotent per-batch upserts."""
+"""Stream Kafka metadata events to MongoDB through MongoDB Spark Connector."""
 
-from collections.abc import Iterable
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 
-from pymongo import MongoClient, ReplaceOne
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import col, from_json
+from pyspark.sql.functions import col, concat_ws, current_timestamp, from_json, lit, sha2, when
 from pyspark.sql.types import IntegerType, StringType, StructField, StructType
 
 from src.common.config import load_settings
 
-UPSERT_BATCH_SIZE = 500
+MONGODB_FORMAT = "mongodb"
 
 
-def metadata_upsert_filter(document: dict[str, Any]) -> dict[str, Any]:
-    """Build the stable MongoDB identity filter for one metadata event."""
-    if document.get("metadata_id"):
-        return {"metadata_id": document["metadata_id"]}
-    if document.get("repo_name") and document.get("file_path"):
-        return {"repo_name": document["repo_name"], "file_path": document["file_path"]}
-    raise ValueError("Metadata event needs metadata_id or repo_name + file_path")
-
-
-def _chunks(items: Iterable[ReplaceOne], size: int) -> Iterable[list[ReplaceOne]]:
-    chunk: list[ReplaceOne] = []
-    for item in items:
-        chunk.append(item)
-        if len(chunk) == size:
-            yield chunk
-            chunk = []
-    if chunk:
-        yield chunk
+def mongodb_write_options() -> dict[str, str]:
+    """Return connector options for stable-key replace-with-upsert writes."""
+    settings = load_settings()
+    return {
+        "connection.uri": settings.mongodb_uri,
+        "database": settings.mongodb_database,
+        "collection": settings.mongodb_collection_metadata,
+        "operationType": "replace",
+        "idFieldList": "metadata_id",
+        "upsertDocument": "true",
+        "ordered": "false",
+    }
 
 
 def upsert_metadata_batch(batch_df: DataFrame, batch_id: int) -> None:
-    """Upsert one Spark micro-batch without collecting the whole batch in driver memory."""
-    settings = load_settings()
-    updated_at = datetime.now(timezone.utc)
+    """Write one micro-batch using the MongoDB Spark Connector.
 
-    def operations() -> Iterable[ReplaceOne]:
-        for row in batch_df.toLocalIterator():
-            document = row.asDict(recursive=True)
-            document["ingested_at"] = updated_at
-            document["spark_batch_id"] = batch_id
-            yield ReplaceOne(metadata_upsert_filter(document), document, upsert=True)
-
-    client = MongoClient(settings.mongodb_uri)
-    try:
-        collection = client[settings.mongodb_database][settings.mongodb_collection_metadata]
-        for chunk in _chunks(operations(), UPSERT_BATCH_SIZE):
-            collection.bulk_write(chunk, ordered=False)
-    finally:
-        client.close()
+    Connector batch writes support replace + upsert keyed by ``idFieldList``.
+    ``foreachBatch`` keeps Kafka checkpoint ownership in Structured Streaming;
+    it does not use PyMongo or collect rows in the Python driver.
+    """
+    enriched_df = batch_df.withColumn("ingested_at", current_timestamp()).withColumn(
+        "spark_batch_id", lit(batch_id)
+    )
+    enriched_df.write.format(MONGODB_FORMAT).mode("append").options(
+        **mongodb_write_options()
+    ).save()
 
 
 def build_metadata_schema() -> StructType:
@@ -92,18 +76,22 @@ def main() -> None:
         .option("startingOffsets", "earliest")
         .load()
     )
-    metadata_df = (
+    parsed_df = (
         raw_df.select(from_json(col("value").cast("string"), build_metadata_schema()).alias("data"))
         .select("data.*")
-        .where(
-            col("metadata_id").isNotNull()
-            | (col("repo_name").isNotNull() & col("file_path").isNotNull())
-        )
+        .where(col("repo_name").isNotNull() & col("file_path").isNotNull())
+    )
+    # Current producers always send metadata_id. The deterministic fallback
+    # preserves compatibility with older repo_name + file_path events.
+    metadata_df = parsed_df.withColumn(
+        "metadata_id",
+        when(col("metadata_id").isNotNull(), col("metadata_id")).otherwise(
+            sha2(concat_ws("\u001f", col("repo_name"), col("file_path")), 256)
+        ),
     )
 
     # foreachBatch keeps Kafka consumption and checkpointing in Structured
-    # Streaming while allowing stable-key ReplaceOne(upsert=True) semantics.
-    # toLocalIterator and bounded bulk chunks avoid collecting a full batch.
+    # Streaming while the MongoDB Spark Connector performs replace/upsert.
     query = (
         metadata_df.writeStream.foreachBatch(upsert_metadata_batch)
         .option("checkpointLocation", settings.spark_checkpoint_location)

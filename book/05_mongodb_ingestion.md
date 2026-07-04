@@ -10,7 +10,7 @@ MongoDB document per repository file.
 The path is separate from Neo4j topology ingestion:
 
 ```text
-cpg.metadata.v1 -> Spark Structured Streaming -> foreachBatch upsert -> MongoDB
+cpg.metadata.v1 -> Spark Structured Streaming -> MongoDB Spark Connector -> MongoDB
 ```
 
 The destination is the `cpg_lab.source_metadata` collection. Its indexes include a unique
@@ -30,23 +30,23 @@ The metadata document contains:
 
 ## MongoDB Upsert Strategy
 
-The streaming query uses `foreachBatch(upsert_metadata_batch)`. Each Spark row becomes a PyMongo
-`ReplaceOne` operation with `upsert=True`, keyed by `metadata_id`. Repository name and file path are
-the fallback identity if an older event lacks `metadata_id`.
+The streaming query uses `foreachBatch(upsert_metadata_batch)`, and each micro-batch is written by
+`DataFrameWriter.format("mongodb")`. Connector options use `operationType=replace`,
+`upsertDocument=true`, and `idFieldList=metadata_id`. If an older event lacks `metadata_id`, Spark
+derives the same deterministic SHA-256 identity from repository name and file path before writing.
 
-Rows are consumed with `toLocalIterator()` and written in bounded groups of 500, avoiding a full
-micro-batch `collect()` on the driver. `ingested_at` and `spark_batch_id` are set at write time,
-which makes replay processing visible in the stored document.
+No rows are collected into the Python driver. `ingested_at` and `spark_batch_id` are added as Spark
+columns, which makes replay processing visible in the stored document.
 
-Spark remains the Kafka streaming consumer and checkpoint owner; PyMongo is the batch write layer
-used to obtain explicit stable-key replacement semantics.
+Spark remains the Kafka streaming consumer and checkpoint owner; MongoDB Spark Connector is the
+only ingestion write layer. PyMongo is retained only in read-only verification commands.
 
 ## Checkpointing
 
 The streaming query configures:
 
 ```text
-data/checkpoints/mongodb_metadata
+outputs/checkpoints/mongodb_metadata
 ```
 
 through `checkpointLocation`. The checkpoint stores committed Structured Streaming progress so a
@@ -88,7 +88,7 @@ A MongoDB metadata document showing source identity, statistics, parse status, a
 
 ## Reflection
 
-A unique index alone would only reject a repeated insert; it would not update metadata. Explicit
-`ReplaceOne(..., upsert=True)` makes the intended behavior testable: the identity remains stable,
-the document count remains unchanged, and content-dependent fields can change. Spark must remain
+A unique index alone would only reject a repeated insert; it would not update metadata. Connector
+replace/upsert keyed by `metadata_id` makes the intended behavior testable: identity remains stable,
+document count remains unchanged, and content-dependent fields can change. Spark must remain
 running long enough to consume the replay event before the after-state is queried.

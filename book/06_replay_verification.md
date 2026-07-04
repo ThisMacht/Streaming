@@ -77,7 +77,7 @@ zero unresolved placeholders.
 
 ## Spark Checkpoint Evidence
 
-The job sets `checkpointLocation` to `data/checkpoints/mongodb_metadata`. Spark remained active
+The job sets `checkpointLocation` to `outputs/checkpoints/mongodb_metadata`. Spark remained active
 through replay, and the MongoDB document's batch marker advanced from 1 to 7 with a later
 `ingested_at`. This demonstrates that a later streaming micro-batch performed the upsert. The book
 does not infer exact Kafka offsets from the batch number; offset recovery is provided by Spark's

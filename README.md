@@ -3,8 +3,8 @@
 This lab incrementally parses Python files from
 [`huggingface/accelerate`](https://github.com/huggingface/accelerate) with the standard-library
 AST parser. It publishes stable node, edge, metadata, and error events to Kafka. The Neo4j Kafka
-Sink consumes graph events, while Spark Structured Streaming upserts metadata through bounded
-PyMongo bulk writes in `foreachBatch`.
+Sink consumes graph events, while Spark Structured Streaming upserts metadata through the
+MongoDB Spark Connector.
 
 ## Quick start
 
@@ -92,7 +92,7 @@ Run all commands from the project root.
    source .venv/bin/activate
 
    PYTHONPATH=. spark-submit \
-     --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1 \
+     --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.mongodb.spark:mongo-spark-connector_2.12:10.3.0 \
      src/spark_jobs/metadata_to_mongodb.py
    ```
 
@@ -102,7 +102,7 @@ Run all commands from the project root.
    source .venv/bin/activate.fish
 
    env PYTHONPATH=. spark-submit \
-     --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1 \
+     --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.mongodb.spark:mongo-spark-connector_2.12:10.3.0 \
      src/spark_jobs/metadata_to_mongodb.py
    ```
 
@@ -169,8 +169,10 @@ password: password123
 
 * Use `source .venv/bin/activate.fish` when using fish shell.
 * Use `PYTHONPATH=.` or `env PYTHONPATH=.` when running Spark.
-* Spark uses `foreachBatch` and PyMongo `ReplaceOne(..., upsert=True)` so replay updates the stable
-  metadata document instead of attempting a duplicate insert.
+* Spark uses `foreachBatch` with MongoDB Spark Connector `replace` + `upsertDocument=true`, keyed
+  by `metadata_id`, so replay updates the stable document. PyMongo is used only by verification
+  commands, never by the ingestion write path.
+* The checkpoint at `outputs/checkpoints/mongodb_metadata` preserves committed Kafka offsets.
 * If Neo4j shows `0` nodes, check Kafka Connect logs:
 
   ```bash
@@ -179,6 +181,11 @@ password: password123
 
 See [setup](markdowns/setup.md), [source usage](markdowns/src_usage.md), and
 [architecture](markdowns/architecture.md) for details.
+
+The [setup guide](markdowns/setup.md#6-script-reference-and-side-effects) includes a script-by-script
+side-effect table. In particular, run `reset_demo_state.sh` only while Spark is stopped: it removes
+MongoDB metadata, the Spark metadata checkpoint, and the Kafka metadata topic, while leaving Neo4j
+and the other Kafka topics unchanged.
 
 ## Demo logs
 

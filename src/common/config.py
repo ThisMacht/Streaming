@@ -44,6 +44,6 @@ def load_settings() -> Settings:
         mongodb_database=os.getenv("MONGODB_DATABASE", "cpg_lab"),
         mongodb_collection_metadata=os.getenv("MONGODB_COLLECTION_METADATA", "source_metadata"),
         spark_checkpoint_location=os.getenv(
-            "SPARK_CHECKPOINT_LOCATION", "data/checkpoints/mongodb_metadata"
+            "SPARK_CHECKPOINT_LOCATION", "outputs/checkpoints/mongodb_metadata"
         ),
     )

@@ -185,7 +185,7 @@ For bash or zsh:
 
 ```bash
 PYTHONPATH=. spark-submit \
-  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1 \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.mongodb.spark:mongo-spark-connector_2.12:10.3.0 \
   src/spark_jobs/metadata_to_mongodb.py
 ```
 
@@ -193,17 +193,18 @@ For fish shell:
 
 ```fish
 env PYTHONPATH=. spark-submit \
-  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1 \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.mongodb.spark:mongo-spark-connector_2.12:10.3.0 \
   src/spark_jobs/metadata_to_mongodb.py
 ```
 
 The metadata ingestion job uses Apache Spark Structured Streaming to consume metadata events from Kafka topic `cpg.metadata.v1`.
 
-Each parsed micro-batch is upserted to MongoDB with:
+Each parsed micro-batch is upserted through MongoDB Spark Connector with:
 
 ```python
 .writeStream.foreachBatch(upsert_metadata_batch)
-ReplaceOne({"metadata_id": metadata_id}, document, upsert=True)
+batch_df.write.format("mongodb").option("operationType", "replace")
+  .option("idFieldList", "metadata_id").option("upsertDocument", "true").save()
 ```
 
 A checkpoint directory is configured so Spark can resume from the last committed Kafka offsets after restart.
@@ -214,12 +215,12 @@ new `ingested_at` and `spark_batch_id`; its document count does not increase.
 For a clean demo run, reset MongoDB metadata and Spark checkpoint before starting Spark:
 
 ```bash
-docker exec -i cpg-mongodb mongosh --eval 'db = db.getSiblingDB("cpg_lab"); db.source_metadata.drop();'
-docker exec -i cpg-mongodb mongosh < config/mongodb/indexes.js
-rm -rf data/checkpoints/mongodb_metadata
+./scripts/reset_demo_state.sh
 ```
 
-Then start the Spark metadata job again.
+Run the reset only while Spark is stopped. It also deletes and recreates `cpg.metadata.v1`, but
+does not clear Neo4j or the Kafka node, edge, and error topics. Then start the Spark metadata job
+again.
 
 ---
 
@@ -278,7 +279,7 @@ MongoDB metadata documents: > 0
 No duplicate metadata documents found.
 ```
 
-Run replay verification:
+Run controlled modified-file replay verification while Spark remains running:
 
 ```bash
 python -m src.verification.replay_one_file --file src/accelerate/_lab_replay_probe.py --modify
@@ -288,7 +289,7 @@ python -m src.verification.replay_one_file --file src/accelerate/_lab_replay_pro
 
 ## Replay one file
 
-Replay means running the parser again for the same file after the file is selected or modified.
+Reprocessing unchanged content can be done directly with the parser:
 
 ```bash
 python -m src.parser_service.main --mode one --file src/accelerate/accelerator.py
@@ -298,6 +299,21 @@ Neo4j uses `MERGE`, so existing nodes and edges are updated instead of duplicate
 
 MongoDB uses stable-key upsert plus a unique `metadata_id` index, so the existing document is
 updated without creating a duplicate.
+
+For a **modified** file, use `replay_one_file` instead of only invoking the parser. Node IDs contain
+source positions, so a modification can make old topology stale even though `MERGE` prevents ID
+duplicates. The replay command deletes Neo4j topology scoped to the target repository/file, then
+publishes replacement node, edge, and metadata events:
+
+```bash
+python -m src.verification.replay_one_file \
+  --file src/accelerate/_lab_replay_probe.py \
+  --modify \
+  --cleanup-neo4j-before-replay \
+  --wait-seconds 10
+```
+
+The cleanup is enabled by default, but the explicit option makes the evidence command unambiguous.
 
 ---
 
@@ -380,7 +396,7 @@ Error example:
 E11000 duplicate key error collection: cpg_lab.source_metadata index: metadata_id_1
 ```
 
-The current job uses stable-key `ReplaceOne(..., upsert=True)`, so this error usually means an old
+The current job uses connector replace/upsert keyed by `metadata_id`, so this error usually means an old
 append-mode Spark process is still running or the deployed job has not been restarted after the
 code change. Stop only the old Spark process, then start the current Terminal 1 script. Do not
 reset data merely to hide the error.

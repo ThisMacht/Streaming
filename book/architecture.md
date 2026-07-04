@@ -12,7 +12,7 @@ The system parses Python source files one by one, publishes structured events to
 
 ## Overall Architecture
 
-```{figure} images/architecture.png
+```{figure} images/architecture.svg
 :name: architecture-diagram
 :width: 95%
 

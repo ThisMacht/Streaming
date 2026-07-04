@@ -27,5 +27,5 @@ echo "Keep Spark running through modified-file replay so MongoDB upsert can be v
 echo "Stop it with Ctrl+C only after Terminal 2 has captured its final checks."
 
 PYTHONPATH=. spark-submit \
-  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1 \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.mongodb.spark:mongo-spark-connector_2.12:10.3.0 \
   src/spark_jobs/metadata_to_mongodb.py

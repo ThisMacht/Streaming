@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="620" viewBox="0 0 1400 620">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#475569"/>
+    </marker>
+    <style>
+      .box { fill: #f8fafc; stroke: #475569; stroke-width: 2; rx: 8; }
+      .topic { fill: #eff6ff; stroke: #2563eb; stroke-width: 2; rx: 8; }
+      .sink { fill: #f0fdf4; stroke: #16a34a; stroke-width: 2; rx: 8; }
+      .text { font: 20px sans-serif; fill: #0f172a; text-anchor: middle; }
+      .small { font: 17px sans-serif; fill: #0f172a; text-anchor: middle; }
+      .line { fill: none; stroke: #475569; stroke-width: 2; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect class="box" x="25" y="255" width="230" height="90"/>
+  <text class="text" x="140" y="290"><tspan x="140">Python repository</tspan><tspan x="140" dy="28">huggingface/accelerate</tspan></text>
+  <rect class="box" x="310" y="255" width="190" height="90"/>
+  <text class="text" x="405" y="307">Parser Service</text>
+
+  <rect class="topic" x="565" y="40" width="230" height="65"/>
+  <text class="small" x="680" y="80">Kafka: cpg.nodes.v1</text>
+  <rect class="topic" x="565" y="155" width="230" height="65"/>
+  <text class="small" x="680" y="195">Kafka: cpg.edges.v1</text>
+  <rect class="topic" x="565" y="300" width="230" height="65"/>
+  <text class="small" x="680" y="340">Kafka: cpg.metadata.v1</text>
+  <rect class="topic" x="565" y="475" width="230" height="65"/>
+  <text class="small" x="680" y="515">Kafka: cpg.errors.v1</text>
+
+  <rect class="sink" x="875" y="85" width="235" height="90"/>
+  <text class="text" x="992" y="122"><tspan x="992">Neo4j Kafka</tspan><tspan x="992" dy="28">Sink Connector</tspan></text>
+  <rect class="sink" x="850" y="270" width="285" height="125"/>
+  <text class="text" x="992" y="307"><tspan x="992">Spark Structured Streaming</tspan><tspan x="992" dy="28">+ MongoDB Spark</tspan><tspan x="992" dy="28">Connector</tspan></text>
+  <rect class="box" x="875" y="465" width="235" height="75"/>
+  <text class="text" x="992" y="512">Error logs</text>
+
+  <rect class="box" x="1200" y="95" width="175" height="70"/>
+  <text class="text" x="1287" y="138">Neo4j</text>
+  <rect class="box" x="1200" y="297" width="175" height="70"/>
+  <text class="small" x="1287" y="327"><tspan x="1287">MongoDB</tspan><tspan x="1287" dy="23">source_metadata</tspan></text>
+
+  <path class="line" d="M255 300 H310"/>
+  <path class="line" d="M500 285 C525 210 530 72 565 72"/>
+  <path class="line" d="M500 290 C530 245 535 187 565 187"/>
+  <path class="line" d="M500 310 C530 325 535 332 565 332"/>
+  <path class="line" d="M500 325 C530 405 535 507 565 507"/>
+  <path class="line" d="M795 72 C835 72 835 112 875 112"/>
+  <path class="line" d="M795 187 C835 187 835 148 875 148"/>
+  <path class="line" d="M1110 130 H1200"/>
+  <path class="line" d="M795 332 H850"/>
+  <path class="line" d="M1135 332 H1200"/>
+  <path class="line" d="M795 507 H875"/>
+
+  <path d="M405 345 C405 575 1030 590 1287 367" class="line" stroke-dasharray="8 6"/>
+  <text class="small" x="760" y="584">Replay one modified file through the same Kafka paths</text>
+</svg>

@@ -18,7 +18,7 @@ docker exec -i cpg-mongodb mongosh --eval \
   'db = db.getSiblingDB("cpg_lab"); db.source_metadata.deleteMany({});'
 
 echo "Removing the Spark metadata checkpoint..."
-rm -rf data/checkpoints/mongodb_metadata
+rm -rf outputs/checkpoints/mongodb_metadata
 
 echo "Deleting Kafka metadata topic (it is safe if it does not exist)..."
 docker exec cpg-kafka kafka-topics \
