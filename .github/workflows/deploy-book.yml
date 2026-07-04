@@ -41,8 +41,8 @@ jobs:
 
       - name: Build Jupyter Book
         run: |
-          jupyter-book clean book --all
-          jupyter-book build book --builder html
+          rm -rf book/_build
+          jupyter-book build book
           echo "Checking generated files:"
           find book -maxdepth 4 -type d | sort
           ls -la book/_build/html
