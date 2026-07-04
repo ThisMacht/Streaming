@@ -1,0 +1,571 @@
+Terminal 2 pipeline demo
+Log file: outputs/demo_logs/terminal_2_pipeline_20260704_142324.log
+Keep Terminal 1 Spark streaming active through Step 10.
+
+Step 1/12: Check infrastructure, topics, and Neo4j connector
+Docker containers:
+NAMES               STATUS                   PORTS
+cpg-kafka-connect   Up 4 minutes (healthy)   0.0.0.0:8083->8083/tcp, [::]:8083->8083/tcp, 9092/tcp
+cpg-kafka           Up 4 minutes             0.0.0.0:9092->9092/tcp, [::]:9092->9092/tcp, 0.0.0.0:29092->29092/tcp, [::]:29092->29092/tcp
+cpg-mongo-express   Up 4 minutes             0.0.0.0:8081->8081/tcp, [::]:8081->8081/tcp
+cpg-mongodb         Up 4 minutes             0.0.0.0:27017->27017/tcp, [::]:27017->27017/tcp
+cpg-zookeeper       Up 4 minutes             2888/tcp, 0.0.0.0:2181->2181/tcp, [::]:2181->2181/tcp, 3888/tcp
+cpg-neo4j           Up 4 minutes             0.0.0.0:7474->7474/tcp, [::]:7474->7474/tcp, 7473/tcp, 0.0.0.0:7687->7687/tcp, [::]:7687->7687/tcp
+
+Kafka topics:
+__consumer_offsets
+connect-configs
+connect-offsets
+connect-statuses
+cpg.edges.v1
+cpg.errors.v1
+cpg.metadata.v1
+cpg.nodes.v1
+
+Kafka Connect connectors:
+["neo4j-cpg-sink"]
+
+Neo4j connector status:
+{"name":"neo4j-cpg-sink","connector":{"state":"RUNNING","worker_id":"kafka-connect:8083"},"tasks":[{"id":0,"state":"RUNNING","worker_id":"kafka-connect:8083"}],"type":"sink"}
+
+Step 2/12: Clone repository and prepare the baseline replay probe
+[07/04/26 14:23:25] INFO     Repository path already exists; skipping clone:       
+                             data/raw/accelerate                                   
+[07/04/26 14:23:25] INFO     Replay target: src/accelerate/_lab_replay_probe.py    
+                    INFO     Before hash:                                          
+                             1ebfb627a9d4021a10ddd74fb9f317d9e98c620ff9cdc7a9123fda
+                             2b06dba523                                            
+                    INFO     After hash:                                           
+                             1ebfb627a9d4021a10ddd74fb9f317d9e98c620ff9cdc7a9123fda
+                             2b06dba523                                            
+                    INFO     Modified: False                                       
+                    INFO     Events: nodes=10 edges=18                             
+                             metadata_id=59f203db77b71174cb16b9dba979e76280d162b371
+                             8b611ee05a2ef28bc561ea                                
+                    INFO     Dry-run complete; no Neo4j cleanup or Kafka publish   
+                             performed.                                            
+
+Step 3/12: Discover Python files including the baseline probe
+[07/04/26 14:23:26] INFO     Discovered 121 Python files                           
+                    INFO       benchmarks/big_model_inference/big_model_inference.p
+                             y                                                     
+                    INFO       benchmarks/big_model_inference/measures_util.py     
+                    INFO       benchmarks/fp8/ms_amp/ddp.py                        
+                    INFO       benchmarks/fp8/ms_amp/distrib_deepspeed.py          
+                    INFO       benchmarks/fp8/ms_amp/fp8_utils.py                  
+                    INFO       benchmarks/fp8/ms_amp/non_distributed.py            
+                    INFO       benchmarks/fp8/torchao/ddp.py                       
+                    INFO       benchmarks/fp8/torchao/distrib_deepspeed.py         
+                    INFO       benchmarks/fp8/torchao/fp8_utils.py                 
+                    INFO       benchmarks/fp8/torchao/fsdp.py                      
+                    INFO     Saved manifest to data/processed/discovered_files.json
+
+Step 4/12: Dry-run the small replay probe
+[07/04/26 14:23:26] INFO     Parsed src/accelerate/_lab_replay_probe.py: nodes=10  
+                             edges=18 metadata=1 (dry-run)                         
+                    INFO     Finished: successful=1 failed=0                       
+
+Step 5/12: Parse all files and publish baseline events
+[07/04/26 14:23:26] INFO     Parsed                                                
+                             benchmarks/big_model_inference/big_model_inference.py:
+                             nodes=604 edges=1604 metadata=1                       
+                    INFO     Parsed                                                
+                             benchmarks/big_model_inference/measures_util.py:      
+                             nodes=372 edges=998 metadata=1                        
+                    INFO     Parsed benchmarks/fp8/ms_amp/ddp.py: nodes=480        
+                             edges=1326 metadata=1                                 
+                    INFO     Parsed benchmarks/fp8/ms_amp/distrib_deepspeed.py:    
+                             nodes=550 edges=1488 metadata=1                       
+                    INFO     Parsed benchmarks/fp8/ms_amp/fp8_utils.py: nodes=305  
+                             edges=798 metadata=1                                  
+                    INFO     Parsed benchmarks/fp8/ms_amp/non_distributed.py:      
+                             nodes=425 edges=1168 metadata=1                       
+                    INFO     Parsed benchmarks/fp8/torchao/ddp.py: nodes=594       
+                             edges=1635 metadata=1                                 
+                    INFO     Parsed benchmarks/fp8/torchao/distrib_deepspeed.py:   
+                             nodes=714 edges=1931 metadata=1                       
+                    INFO     Parsed benchmarks/fp8/torchao/fp8_utils.py: nodes=298 
+                             edges=777 metadata=1                                  
+                    INFO     Parsed benchmarks/fp8/torchao/fsdp.py: nodes=628      
+                             edges=1716 metadata=1                                 
+                    INFO     Parsed benchmarks/fp8/torchao/non_distributed.py:     
+                             nodes=549 edges=1499 metadata=1                       
+                    INFO     Parsed benchmarks/fp8/transformer_engine/ddp.py:      
+                             nodes=531 edges=1461 metadata=1                       
+                    INFO     Parsed                                                
+                             benchmarks/fp8/transformer_engine/distrib_deepspeed.py
+                             : nodes=676 edges=1837 metadata=1                     
+                    INFO     Parsed benchmarks/fp8/transformer_engine/fp8_utils.py:
+                             nodes=296 edges=773 metadata=1                        
+                    INFO     Parsed benchmarks/fp8/transformer_engine/fsdp.py:     
+                             nodes=567 edges=1545 metadata=1                       
+                    INFO     Parsed                                                
+                             benchmarks/fp8/transformer_engine/non_distributed.py: 
+                             nodes=481 edges=1315 metadata=1                       
+                    INFO     Parsed benchmarks/fsdp2/main.py: nodes=309 edges=826  
+                             metadata=1                                            
+                    INFO     Parsed benchmarks/fsdp2/measure_utils.py: nodes=364   
+                             edges=1012 metadata=1                                 
+                    INFO     Parsed benchmarks/fsdp2/utils.py: nodes=797 edges=2253
+                             metadata=1                                            
+                    INFO     Parsed benchmarks/fsdp2/visualize.py: nodes=470       
+                             edges=1260 metadata=1                                 
+                    INFO     Parsed                                                
+                             benchmarks/torch.compile/regional_compilation.py:     
+                             nodes=214 edges=593 metadata=1                        
+                    INFO     Parsed                                                
+                             manim_animations/big_model_inference/stage_1.py:      
+                             nodes=490 edges=1312 metadata=1                       
+                    INFO     Parsed                                                
+                             manim_animations/big_model_inference/stage_2.py:      
+                             nodes=594 edges=1599 metadata=1                       
+[07/04/26 14:23:27] INFO     Parsed                                                
+                             manim_animations/big_model_inference/stage_3.py:      
+                             nodes=771 edges=2104 metadata=1                       
+                    INFO     Parsed                                                
+                             manim_animations/big_model_inference/stage_4.py:      
+                             nodes=770 edges=2098 metadata=1                       
+                    INFO     Parsed                                                
+                             manim_animations/big_model_inference/stage_5.py:      
+                             nodes=1031 edges=2849 metadata=1                      
+                    INFO     Parsed manim_animations/dataloaders/stage_0.py:       
+                             nodes=62 edges=147 metadata=1                         
+                    INFO     Parsed manim_animations/dataloaders/stage_1.py:       
+                             nodes=62 edges=147 metadata=1                         
+                    INFO     Parsed manim_animations/dataloaders/stage_2.py:       
+                             nodes=739 edges=1942 metadata=1                       
+                    INFO     Parsed manim_animations/dataloaders/stage_3.py:       
+                             nodes=80 edges=199 metadata=1                         
+                    INFO     Parsed manim_animations/dataloaders/stage_4.py:       
+                             nodes=123 edges=312 metadata=1                        
+                    INFO     Parsed manim_animations/dataloaders/stage_5.py:       
+                             nodes=992 edges=2661 metadata=1                       
+                    INFO     Parsed manim_animations/dataloaders/stage_6.py:       
+                             nodes=945 edges=2539 metadata=1                       
+                    INFO     Parsed manim_animations/dataloaders/stage_7.py:       
+                             nodes=909 edges=2434 metadata=1                       
+                    INFO     Parsed src/accelerate/__init__.py: nodes=48 edges=94  
+                             metadata=1                                            
+                    INFO     Parsed src/accelerate/_lab_replay_probe.py: nodes=10  
+                             edges=18 metadata=1                                   
+                    INFO     Parsed src/accelerate/accelerator.py: nodes=9969      
+                             edges=28760 metadata=1                                
+[07/04/26 14:23:28] INFO     Parsed src/accelerate/big_modeling.py: nodes=1774     
+                             edges=5094 metadata=1                                 
+                    INFO     Parsed src/accelerate/checkpointing.py: nodes=1130    
+                             edges=3056 metadata=1                                 
+                    INFO     Parsed src/accelerate/commands/__init__.py: nodes=1   
+                             edges=0 metadata=1                                    
+                    INFO     Parsed src/accelerate/commands/accelerate_cli.py:     
+                             nodes=112 edges=269 metadata=1                        
+                    INFO     Parsed src/accelerate/commands/config/__init__.py:    
+                             nodes=95 edges=234 metadata=1                         
+                    INFO     Parsed src/accelerate/commands/config/cluster.py:     
+                             nodes=2057 edges=5577 metadata=1                      
+                    INFO     Parsed src/accelerate/commands/config/config.py:      
+                             nodes=171 edges=439 metadata=1                        
+                    INFO     Parsed src/accelerate/commands/config/config_args.py: 
+                             nodes=929 edges=2613 metadata=1                       
+                    INFO     Parsed src/accelerate/commands/config/config_utils.py:
+                             nodes=258 edges=659 metadata=1                        
+                    INFO     Parsed src/accelerate/commands/config/default.py:     
+                             nodes=465 edges=1210 metadata=1                       
+                    INFO     Parsed src/accelerate/commands/config/sagemaker.py:   
+                             nodes=584 edges=1514 metadata=1                       
+                    INFO     Parsed src/accelerate/commands/config/update.py:      
+                             nodes=122 edges=308 metadata=1                        
+                    INFO     Parsed src/accelerate/commands/env.py: nodes=422      
+                             edges=1107 metadata=1                                 
+                    INFO     Parsed src/accelerate/commands/estimate.py: nodes=1011
+                             edges=2756 metadata=1                                 
+                    INFO     Parsed src/accelerate/commands/launch.py: nodes=3513  
+                             edges=9409 metadata=1                                 
+                    INFO     Parsed src/accelerate/commands/menu/__init__.py:      
+                             nodes=3 edges=4 metadata=1                            
+                    INFO     Parsed src/accelerate/commands/menu/cursor.py:        
+                             nodes=172 edges=466 metadata=1                        
+                    INFO     Parsed src/accelerate/commands/menu/helpers.py:       
+                             nodes=120 edges=299 metadata=1                        
+                    INFO     Parsed src/accelerate/commands/menu/input.py:         
+                             nodes=176 edges=481 metadata=1                        
+                    INFO     Parsed src/accelerate/commands/menu/keymap.py:        
+                             nodes=423 edges=1165 metadata=1                       
+[07/04/26 14:23:29] INFO     Parsed src/accelerate/commands/menu/selection_menu.py:
+                             nodes=484 edges=1330 metadata=1                       
+                    INFO     Parsed src/accelerate/commands/merge.py: nodes=122    
+                             edges=308 metadata=1                                  
+                    INFO     Parsed src/accelerate/commands/test.py: nodes=124     
+                             edges=313 metadata=1                                  
+                    INFO     Parsed src/accelerate/commands/to_fsdp2.py: nodes=436 
+                             edges=1144 metadata=1                                 
+                    INFO     Parsed src/accelerate/commands/tpu.py: nodes=405      
+                             edges=1076 metadata=1                                 
+                    INFO     Parsed src/accelerate/commands/utils.py: nodes=319    
+                             edges=859 metadata=1                                  
+                    INFO     Parsed src/accelerate/data_loader.py: nodes=3740      
+                             edges=10869 metadata=1                                
+                    INFO     Parsed src/accelerate/hooks.py: nodes=2014 edges=5910 
+                             metadata=1                                            
+                    INFO     Parsed src/accelerate/inference.py: nodes=499         
+                             edges=1402 metadata=1                                 
+                    INFO     Parsed src/accelerate/launchers.py: nodes=684         
+                             edges=1751 metadata=1                                 
+                    INFO     Parsed src/accelerate/local_sgd.py: nodes=188         
+                             edges=514 metadata=1                                  
+                    INFO     Parsed src/accelerate/logging.py: nodes=247 edges=662 
+                             metadata=1                                            
+                    INFO     Parsed src/accelerate/memory_utils.py: nodes=10       
+                             edges=20 metadata=1                                   
+                    INFO     Parsed src/accelerate/optimizer.py: nodes=625         
+                             edges=1771 metadata=1                                 
+                    INFO     Parsed src/accelerate/parallelism_config.py:          
+                             nodes=1161 edges=3210 metadata=1                      
+                    INFO     Parsed src/accelerate/scheduler.py: nodes=202         
+                             edges=554 metadata=1                                  
+                    INFO     Parsed src/accelerate/state.py: nodes=3222 edges=8952 
+                             metadata=1                                            
+                    INFO     Parsed src/accelerate/test_utils/__init__.py: nodes=56
+                             edges=110 metadata=1                                  
+                    INFO     Parsed src/accelerate/test_utils/examples.py:         
+                             nodes=400 edges=1151 metadata=1                       
+                    INFO     Parsed src/accelerate/test_utils/scripts/__init__.py: 
+                             nodes=1 edges=0 metadata=1                            
+                    INFO     Parsed                                                
+                             src/accelerate/test_utils/scripts/external_deps/__init
+                             __.py: nodes=1 edges=0 metadata=1                     
+                    INFO     Parsed                                                
+                             src/accelerate/test_utils/scripts/external_deps/test_c
+                             heckpointing.py: nodes=860 edges=2358 metadata=1      
+                    INFO     Parsed                                                
+                             src/accelerate/test_utils/scripts/external_deps/test_d
+                             s_alst_ulysses_sp.py: nodes=417 edges=1132 metadata=1 
+                    INFO     Parsed                                                
+                             src/accelerate/test_utils/scripts/external_deps/test_d
+                             s_multiple_model.py: nodes=1073 edges=2988 metadata=1 
+                    INFO     Parsed                                                
+                             src/accelerate/test_utils/scripts/external_deps/test_m
+                             etrics.py: nodes=1120 edges=3116 metadata=1           
+                    INFO     Parsed                                                
+                             src/accelerate/test_utils/scripts/external_deps/test_p
+                             eak_memory_usage.py: nodes=1016 edges=2768 metadata=1 
+                    INFO     Parsed                                                
+                             src/accelerate/test_utils/scripts/external_deps/test_p
+                             erformance.py: nodes=899 edges=2426 metadata=1        
+                    INFO     Parsed                                                
+                             src/accelerate/test_utils/scripts/external_deps/test_p
+                             ippy.py: nodes=283 edges=764 metadata=1               
+                    INFO     Parsed                                                
+                             src/accelerate/test_utils/scripts/external_deps/test_z
+                             ero3_integration.py: nodes=92 edges=219 metadata=1    
+                    INFO     Parsed src/accelerate/test_utils/scripts/test_cli.py: 
+                             nodes=60 edges=146 metadata=1                         
+                    INFO     Parsed                                                
+                             src/accelerate/test_utils/scripts/test_ddp_comm_hook.p
+                             y: nodes=297 edges=820 metadata=1                     
+[07/04/26 14:23:30] INFO     Parsed                                                
+                             src/accelerate/test_utils/scripts/test_distributed_dat
+                             a_loop.py: nodes=1362 edges=3829 metadata=1           
+                    INFO     Parsed                                                
+                             src/accelerate/test_utils/scripts/test_merge_weights.p
+                             y: nodes=552 edges=1511 metadata=1                    
+                    INFO     Parsed                                                
+                             src/accelerate/test_utils/scripts/test_notebook.py:   
+                             nodes=342 edges=886 metadata=1                        
+                    INFO     Parsed src/accelerate/test_utils/scripts/test_ops.py: 
+                             nodes=758 edges=2094 metadata=1                       
+                    INFO     Parsed                                                
+                             src/accelerate/test_utils/scripts/test_script.py:     
+                             nodes=3681 edges=10410 metadata=1                     
+                    INFO     Parsed src/accelerate/test_utils/scripts/test_sync.py:
+                             nodes=1593 edges=4653 metadata=1                      
+                    INFO     Parsed src/accelerate/test_utils/testing.py:          
+                             nodes=1934 edges=5086 metadata=1                      
+                    INFO     Parsed src/accelerate/test_utils/training.py:         
+                             nodes=546 edges=1451 metadata=1                       
+                    INFO     Parsed src/accelerate/tracking.py: nodes=2770         
+                             edges=7822 metadata=1                                 
+                    INFO     Parsed src/accelerate/utils/__init__.py: nodes=299    
+                             edges=597 metadata=1                                  
+                    INFO     Parsed src/accelerate/utils/ao.py: nodes=208 edges=559
+                             metadata=1                                            
+                    INFO     Parsed src/accelerate/utils/bnb.py: nodes=1258        
+                             edges=3593 metadata=1                                 
+                    INFO     Parsed src/accelerate/utils/constants.py: nodes=249   
+                             edges=601 metadata=1                                  
+[07/04/26 14:23:31] INFO     Parsed src/accelerate/utils/dataclasses.py: nodes=8907
+                             edges=24640 metadata=1                                
+                    INFO     Parsed src/accelerate/utils/deepspeed.py: nodes=766   
+                             edges=2068 metadata=1                                 
+                    INFO     Parsed src/accelerate/utils/environment.py: nodes=1195
+                             edges=3208 metadata=1                                 
+                    INFO     Parsed src/accelerate/utils/fsdp_utils.py: nodes=2911 
+                             edges=8251 metadata=1                                 
+                    INFO     Parsed src/accelerate/utils/imports.py: nodes=1167    
+                             edges=3066 metadata=1                                 
+                    INFO     Parsed src/accelerate/utils/launch.py: nodes=3351     
+                             edges=9619 metadata=1                                 
+[07/04/26 14:23:32] INFO     Parsed src/accelerate/utils/megatron_lm.py: nodes=4034
+                             edges=11498 metadata=1                                
+                    INFO     Parsed src/accelerate/utils/memory.py: nodes=342      
+                             edges=873 metadata=1                                  
+                    INFO     Parsed src/accelerate/utils/modeling.py: nodes=7340   
+                             edges=21592 metadata=1                                
+                    INFO     Parsed src/accelerate/utils/offload.py: nodes=692     
+                             edges=1956 metadata=1                                 
+                    INFO     Parsed src/accelerate/utils/operations.py: nodes=2587 
+                             edges=7454 metadata=1                                 
+                    INFO     Parsed src/accelerate/utils/other.py: nodes=1300      
+                             edges=3646 metadata=1                                 
+                    INFO     Parsed src/accelerate/utils/random.py: nodes=579      
+                             edges=1669 metadata=1                                 
+                    INFO     Parsed src/accelerate/utils/rich.py: nodes=18 edges=36
+                             metadata=1                                            
+                    INFO     Parsed src/accelerate/utils/torch_xla.py: nodes=95    
+                             edges=232 metadata=1                                  
+                    INFO     Parsed src/accelerate/utils/tqdm.py: nodes=78         
+                             edges=186 metadata=1                                  
+                    INFO     Parsed src/accelerate/utils/transformer_engine.py:    
+                             nodes=564 edges=1572 metadata=1                       
+                    INFO     Parsed src/accelerate/utils/versions.py: nodes=95     
+                             edges=250 metadata=1                                  
+[07/04/26 14:23:33] INFO     Parsed utils/log_reports.py: nodes=621 edges=1605     
+                             metadata=1                                            
+                    INFO     Parsed utils/stale.py: nodes=174 edges=456 metadata=1 
+                    INFO     Finished: successful=121 failed=0                     
+
+Step 6/12: Wait for Spark and Kafka sinks
+
+Step 7/12: Verify baseline MongoDB and Neo4j state
+[07/04/26 14:23:48] INFO     MongoDB metadata documents: 121                       
+                    INFO     Duplicate metadata_id groups: 0                       
+                    INFO     Duplicate repo/file groups: 0                         
+                    INFO     Target metadata: {'event_time':                       
+                             '2026-07-04T07:23:27.226230Z', 'file_path':           
+                             'src/accelerate/_lab_replay_probe.py', 'metadata_id': 
+                             '59f203db77b71174cb16b9dba979e76280d162b3718b611ee05a2
+                             ef28bc561ea', 'file_hash':                            
+                             '1ebfb627a9d4021a10ddd74fb9f317d9e98c620ff9cdc7a9123fd
+                             a2b06dba523', 'node_count': 10, 'edge_count': 18,     
+                             'ingested_at': datetime.datetime(2026, 7, 4, 7, 23,   
+                             27, 968000), 'spark_batch_id': 1}                     
+[07/04/26 14:23:50] INFO     Neo4j totals: nodes=114782 edges=319302               
+                    INFO     Duplicate node IDs: 0                                 
+                    INFO     Duplicate edge IDs: 0                                 
+                    INFO     Unresolved placeholder nodes: 0                       
+                    INFO     Target file src/accelerate/_lab_replay_probe.py:      
+                             nodes=10 edges=18                                     
+                    INFO     Sample edge: {'source_id':                            
+                             '528f099971a140602fe56298d53c863774d464c07f18bae3a2e83
+                             5796f3794b1', 'source_type': 'FunctionDef', 'edge_id':
+                             'f17a2f1096410e82a7cc0c7397400a20852521da32ef23d13af66
+                             8c7a63f0bef', 'edge_type': 'CFG', 'target_id':        
+                             '8429582585bccc752346f37fa9a9cb6b5f393a20e055fe61e9d94
+                             391c5c2ca17', 'target_type': 'arg'}                   
+                    INFO     Sample edge: {'source_id':                            
+                             '528f099971a140602fe56298d53c863774d464c07f18bae3a2e83
+                             5796f3794b1', 'source_type': 'FunctionDef', 'edge_id':
+                             '799e627e236e16288ea8e9773bea8826fc6afe32761fc70902652
+                             9a261a49a0a', 'edge_type': 'AST', 'target_id':        
+                             '0e63f0678e6bfc2da041536edddc00f075646e16e13c232b599af
+                             34ab9b6e5bf', 'target_type': 'Return'}                
+                    INFO     Sample edge: {'source_id':                            
+                             '528f099971a140602fe56298d53c863774d464c07f18bae3a2e83
+                             5796f3794b1', 'source_type': 'FunctionDef', 'edge_id':
+                             '029481b11f7cfda35f7c5327745a3f572967a6cdc3c1da2b47b94
+                             a0d5f712737', 'edge_type': 'AST', 'target_id':        
+                             '6437febb3d47a728ce56c3414629620742623e516ba4d01294022
+                             985d8a4cc93', 'target_type': 'arguments'}             
+                    INFO     Sample edge: {'source_id':                            
+                             '7c44f1020cac4c8a04884db2552d2672a9ee17022f6b17de7e999
+                             76476ff9383', 'source_type': 'BinOp', 'edge_id':      
+                             '1cb722edcd7bbd8c6a2256ab4f01e94af8c21786f8d8964fbcc5a
+                             3f4b706f59e', 'edge_type': 'AST', 'target_id':        
+                             '00eca086f670af41a1fbb9226fc8db9f725f828734f40beeab01e
+                             54beb072300', 'target_type': 'Constant'}              
+                    INFO     Sample edge: {'source_id':                            
+                             '7c44f1020cac4c8a04884db2552d2672a9ee17022f6b17de7e999
+                             76476ff9383', 'source_type': 'BinOp', 'edge_id':      
+                             'acc1529522f166f8d40856ed5bda6569f0fbc3a86b0a17a9a42e7
+                             8081eb086c0', 'edge_type': 'CFG', 'target_id':        
+                             '00eca086f670af41a1fbb9226fc8db9f725f828734f40beeab01e
+                             54beb072300', 'target_type': 'Constant'}              
+
+Step 8/12: Modify, clean, and replay only the controlled probe
+[07/04/26 14:23:51] INFO     Replay target: src/accelerate/_lab_replay_probe.py    
+                    INFO     Before hash:                                          
+                             1ebfb627a9d4021a10ddd74fb9f317d9e98c620ff9cdc7a9123fda
+                             2b06dba523                                            
+                    INFO     After hash:                                           
+                             80731426ce3a3bec87cf61c7c01778c5034da283613482e14c8af8
+                             8d5740e0fd                                            
+                    INFO     Modified: True                                        
+                    INFO     Events: nodes=13 edges=25                             
+                             metadata_id=59f203db77b71174cb16b9dba979e76280d162b371
+                             8b611ee05a2ef28bc561ea                                
+                    INFO     Before replay: Neo4j={'node_count': 114782,           
+                             'edge_count': 319302} MongoDB document count=121      
+                             metadata={'schema_version': '1.0', 'event_time':      
+                             '2026-07-04T07:23:27.226230Z', 'repo_name':           
+                             'accelerate', 'file_path':                            
+                             'src/accelerate/_lab_replay_probe.py', 'metadata_id': 
+                             '59f203db77b71174cb16b9dba979e76280d162b3718b611ee05a2
+                             ef28bc561ea', 'file_hash':                            
+                             '1ebfb627a9d4021a10ddd74fb9f317d9e98c620ff9cdc7a9123fd
+                             a2b06dba523', 'line_count': 2, 'function_count': 1,   
+                             'class_count': 0, 'import_count': 0, 'node_count': 10,
+                             'edge_count': 18, 'status': 'parsed', 'ingested_at':  
+                             datetime.datetime(2026, 7, 4, 7, 23, 27, 968000),     
+                             'spark_batch_id': 1}                                  
+                    INFO     Neo4j target-file cleanup deleted 10 nodes            
+                    INFO     Waiting 10.0 seconds for Neo4j and the running Spark  
+                             job                                                   
+[07/04/26 14:24:01] INFO     After replay: Neo4j={'node_count': 114785,            
+                             'edge_count': 319309} MongoDB document count=121      
+                             metadata={'schema_version': '1.0', 'event_time':      
+                             '2026-07-04T07:23:51.440842Z', 'repo_name':           
+                             'accelerate', 'file_path':                            
+                             'src/accelerate/_lab_replay_probe.py', 'metadata_id': 
+                             '59f203db77b71174cb16b9dba979e76280d162b3718b611ee05a2
+                             ef28bc561ea', 'file_hash':                            
+                             '80731426ce3a3bec87cf61c7c01778c5034da283613482e14c8af
+                             88d5740e0fd', 'line_count': 6, 'function_count': 2,   
+                             'class_count': 0, 'import_count': 0, 'node_count': 13,
+                             'edge_count': 25, 'status': 'parsed', 'ingested_at':  
+                             datetime.datetime(2026, 7, 4, 7, 23, 51, 812000),     
+                             'spark_batch_id': 7}                                  
+                    INFO     Count delta: nodes=+3 edges=+7 metadata_documents=+0  
+                    INFO     Duplicate count: metadata_id=0 repo/file=0            
+                    INFO     MongoDB metadata reflects the replayed file hash.     
+
+Step 9/12: Verify post-replay upsert and graph replacement
+[07/04/26 14:24:02] INFO     MongoDB metadata documents: 121                       
+                    INFO     Duplicate metadata_id groups: 0                       
+                    INFO     Duplicate repo/file groups: 0                         
+                    INFO     Target metadata: {'event_time':                       
+                             '2026-07-04T07:23:51.440842Z', 'file_path':           
+                             'src/accelerate/_lab_replay_probe.py', 'metadata_id': 
+                             '59f203db77b71174cb16b9dba979e76280d162b3718b611ee05a2
+                             ef28bc561ea', 'file_hash':                            
+                             '80731426ce3a3bec87cf61c7c01778c5034da283613482e14c8af
+                             88d5740e0fd', 'node_count': 13, 'edge_count': 25,     
+                             'ingested_at': datetime.datetime(2026, 7, 4, 7, 23,   
+                             51, 812000), 'spark_batch_id': 7}                     
+[07/04/26 14:24:03] INFO     Neo4j totals: nodes=114785 edges=319309               
+                    INFO     Duplicate node IDs: 0                                 
+                    INFO     Duplicate edge IDs: 0                                 
+                    INFO     Unresolved placeholder nodes: 0                       
+                    INFO     Target file src/accelerate/_lab_replay_probe.py:      
+                             nodes=13 edges=25                                     
+                    INFO     Sample edge: {'source_id':                            
+                             '528f099971a140602fe56298d53c863774d464c07f18bae3a2e83
+                             5796f3794b1', 'source_type': 'FunctionDef', 'edge_id':
+                             '029481b11f7cfda35f7c5327745a3f572967a6cdc3c1da2b47b94
+                             a0d5f712737', 'edge_type': 'AST', 'target_id':        
+                             '6437febb3d47a728ce56c3414629620742623e516ba4d01294022
+                             985d8a4cc93', 'target_type': 'arguments'}             
+                    INFO     Sample edge: {'source_id':                            
+                             '528f099971a140602fe56298d53c863774d464c07f18bae3a2e83
+                             5796f3794b1', 'source_type': 'FunctionDef', 'edge_id':
+                             'f17a2f1096410e82a7cc0c7397400a20852521da32ef23d13af66
+                             8c7a63f0bef', 'edge_type': 'CFG', 'target_id':        
+                             '8429582585bccc752346f37fa9a9cb6b5f393a20e055fe61e9d94
+                             391c5c2ca17', 'target_type': 'arg'}                   
+                    INFO     Sample edge: {'source_id':                            
+                             '528f099971a140602fe56298d53c863774d464c07f18bae3a2e83
+                             5796f3794b1', 'source_type': 'FunctionDef', 'edge_id':
+                             '799e627e236e16288ea8e9773bea8826fc6afe32761fc70902652
+                             9a261a49a0a', 'edge_type': 'AST', 'target_id':        
+                             '0e63f0678e6bfc2da041536edddc00f075646e16e13c232b599af
+                             34ab9b6e5bf', 'target_type': 'Return'}                
+                    INFO     Sample edge: {'source_id':                            
+                             '7c44f1020cac4c8a04884db2552d2672a9ee17022f6b17de7e999
+                             76476ff9383', 'source_type': 'BinOp', 'edge_id':      
+                             '1cb722edcd7bbd8c6a2256ab4f01e94af8c21786f8d8964fbcc5a
+                             3f4b706f59e', 'edge_type': 'AST', 'target_id':        
+                             '00eca086f670af41a1fbb9226fc8db9f725f828734f40beeab01e
+                             54beb072300', 'target_type': 'Constant'}              
+                    INFO     Sample edge: {'source_id':                            
+                             '7c44f1020cac4c8a04884db2552d2672a9ee17022f6b17de7e999
+                             76476ff9383', 'source_type': 'BinOp', 'edge_id':      
+                             'acc1529522f166f8d40856ed5bda6569f0fbc3a86b0a17a9a42e7
+                             8081eb086c0', 'edge_type': 'CFG', 'target_id':        
+                             '00eca086f670af41a1fbb9226fc8db9f725f828734f40beeab01e
+                             54beb072300', 'target_type': 'Constant'}              
+
+Step 10/12: Publish and inspect one controlled parser error
+[07/04/26 14:24:04] ERROR    Failed to parse src/accelerate/_lab_parser_error.py   
+                             ╭──────── Traceback (most recent call last) ─────────╮
+                             │ /home/macht/Dev/HCMUS/Streaming/src/parser_service │
+                             │ /main.py:55 in process_file                        │
+                             │                                                    │
+                             │    52 │   """Build and optionally publish events f │
+                             │    53 │   display_path = _display_path(repo_path,  │
+                             │    54 │   try:                                     │
+                             │ ❱  55 │   │   nodes, edges, metadata = build_event │
+                             │       file_path)                                   │
+                             │    56 │   │   if not dry_run:                      │
+                             │    57 │   │   │   assert producer is not None      │
+                             │    58 │   │   │   for event in nodes:              │
+                             │                                                    │
+                             │ /home/macht/Dev/HCMUS/Streaming/src/parser_service │
+                             │ /event_builder.py:19 in build_events_for_file      │
+                             │                                                    │
+                             │   16 ) -> tuple[list[NodeEvent], list[EdgeEvent],  │
+                             │   17 │   """Parse one file and construct determini │
+                             │   18 │   absolute, relative = _relative_file_path( │
+                             │ ❱ 19 │   nodes, ast_edges, metadata = parse_python │
+                             │   20 │   cpg_edges = build_cpg_edges(nodes, ast_ed │
+                             │   21 │   digest = file_sha256(absolute)            │
+                             │   22 │   event_time = datetime.now(timezone.utc).i │
+                             │                                                    │
+                             │ /home/macht/Dev/HCMUS/Streaming/src/parser_service │
+                             │ /ast_parser.py:71 in parse_python_file             │
+                             │                                                    │
+                             │    68 │   """Parse one Python file and return uniq │
+                             │    69 │   absolute, relative = _relative_file_path │
+                             │    70 │   source = absolute.read_text(encoding="ut │
+                             │ ❱  71 │   tree = ast.parse(source, filename=relati │
+                             │    72 │   nodes_by_id: dict[str, ParsedAstNode] =  │
+                             │    73 │   edges: set[tuple[str, str]] = set()      │
+                             │    74                                              │
+                             │                                                    │
+                             │ /home/macht/.local/share/uv/python/cpython-3.12.13 │
+                             │ -linux-x86_64-gnu/lib/python3.12/ast.py:52 in      │
+                             │ parse                                              │
+                             │                                                    │
+                             │     49 │   │   │   raise ValueError(f"Unsupported  │
+                             │     50 │   │   feature_version = minor             │
+                             │     51 │   # Else it should be an int giving the m │
+                             │ ❱   52 │   return compile(source, filename, mode,  │
+                             │     53 │   │   │   │      _feature_version=feature │
+                             │     54                                             │
+                             │     55                                             │
+                             ╰────────────────────────────────────────────────────╯
+                             ╭────────────────────────────────────────────────────╮
+                             │ def broken_func(                                   │
+                             │                ▲                                   │
+                             ╰────────────────────────────────────────────────────╯
+                             SyntaxError: '(' was never closed                     
+[07/04/26 14:24:05] INFO     Published controlled parser error for                 
+                             src/accelerate/_lab_parser_error.py                   
+{"schema_version":"1.0","event_time":"2026-07-04T07:24:04.242876Z","repo_name":"accelerate","file_path":"src/accelerate/_lab_parser_error.py","error_type":"SyntaxError","error_message":"'(' was never closed (_lab_parser_error.py, line 1)","status":"failed"}
+Processed a total of 1 messages
+
+Step 11/12: Restore the probe source for the next demo
+[07/04/26 14:24:10] INFO     Replay target: src/accelerate/_lab_replay_probe.py    
+                    INFO     Before hash:                                          
+                             80731426ce3a3bec87cf61c7c01778c5034da283613482e14c8af8
+                             8d5740e0fd                                            
+                    INFO     After hash:                                           
+                             1ebfb627a9d4021a10ddd74fb9f317d9e98c620ff9cdc7a9123fda
+                             2b06dba523                                            
+                    INFO     Modified: True                                        
+                    INFO     Events: nodes=10 edges=18                             
+                             metadata_id=59f203db77b71174cb16b9dba979e76280d162b371
+                             8b611ee05a2ef28bc561ea                                
+                    INFO     Dry-run complete; no Neo4j cleanup or Kafka publish   
+                             performed.                                            
+
+Step 12/12: Preserve selected evidence
+Tracked evidence copy: evidence/logs/terminal_2_pipeline_latest.log
+Pipeline demo complete. You may now stop Spark in Terminal 1 with Ctrl+C.

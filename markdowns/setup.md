@@ -117,7 +117,7 @@ Start the Spark job in a separate terminal and keep it running:
 
 ```bash
 spark-submit \
-  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.mongodb.spark:mongo-spark-connector_2.12:10.3.0 \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1 \
   src/spark_jobs/metadata_to_mongodb.py
 ```
 
@@ -127,8 +127,15 @@ Then publish parser events from another terminal and verify both databases:
 python -m src.parser_service.main --mode one --file src/accelerate/accelerator.py
 python -m src.verification.neo4j_checks
 python -m src.verification.mongodb_checks
-python -m src.verification.replay_one_file --file src/accelerate/accelerator.py
+python -m src.verification.replay_one_file \
+  --file src/accelerate/_lab_replay_probe.py --restore --dry-run
+python -m src.repo_tools.discover_files
+python -m src.parser_service.main --mode all
+python -m src.verification.replay_one_file \
+  --file src/accelerate/_lab_replay_probe.py --modify
 ```
+
+Keep Spark running until the modified replay and both database verification commands finish.
 
 ## 9. Stop services
 

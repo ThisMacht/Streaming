@@ -4,77 +4,84 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-mkdir -p outputs/demo_logs
+mkdir -p outputs/demo_logs evidence/logs
 timestamp="$(date +%Y%m%d_%H%M%S)"
 log_file="outputs/demo_logs/terminal_2_pipeline_${timestamp}.log"
+evidence_file="evidence/logs/terminal_2_pipeline_latest.log"
+
+copy_evidence_log() {
+  cp "$log_file" "$evidence_file" 2>/dev/null || true
+}
+trap copy_evidence_log EXIT
 
 source .venv/bin/activate
 exec > >(tee -a "$log_file") 2>&1
 
+probe="src/accelerate/_lab_replay_probe.py"
+
 echo "Terminal 2 pipeline demo"
 echo "Log file: $log_file"
+echo "Keep Terminal 1 Spark streaming active through Step 10."
 
 echo ""
-echo "Step 1/10: Check infrastructure"
+echo "Step 1/12: Check infrastructure, topics, and Neo4j connector"
 ./scripts/check_infra.sh
 
 echo ""
-echo "Step 2/10: Check Kafka topics"
-docker exec cpg-kafka kafka-topics --bootstrap-server kafka:29092 --list
-
-echo ""
-echo "Step 3/10: Check Neo4j Kafka Sink Connector"
-curl -fsS http://localhost:8083/connectors/neo4j-cpg-sink/status
-echo ""
-
-echo ""
-echo "Step 4/10: Clone repository and discover files"
+echo "Step 2/12: Clone repository and prepare the baseline replay probe"
 python -m src.repo_tools.clone_repo
+python -m src.verification.replay_one_file --file "$probe" --restore --dry-run
+
+echo ""
+echo "Step 3/12: Discover Python files including the baseline probe"
 python -m src.repo_tools.discover_files
 
 echo ""
-echo "Step 5/10: Dry-run one parser file"
-python -m src.parser_service.main \
-  --mode one \
-  --file src/accelerate/accelerator.py \
-  --dry-run
+echo "Step 4/12: Dry-run the small replay probe"
+python -m src.parser_service.main --mode one --file "$probe" --dry-run
 
 echo ""
-echo "Step 6/10: Parse all files and publish events"
+echo "Step 5/12: Parse all files and publish baseline events"
 python -m src.parser_service.main --mode all
 
 echo ""
-echo "Step 7/10: Wait for Spark and sinks"
+echo "Step 6/12: Wait for Spark and Kafka sinks"
 sleep 15
 
 echo ""
-echo "Step 8/10: Verify MongoDB and Neo4j"
-python -m src.verification.mongodb_checks
-python -m src.verification.neo4j_checks
+echo "Step 7/12: Verify baseline MongoDB and Neo4j state"
+python -m src.verification.verify_mongodb_metadata --file "$probe"
+python -m src.verification.verify_neo4j_counts --file "$probe"
 
 echo ""
-echo "Step 9/10: Replay verification"
-echo "If Spark is still running in Terminal 1, replay may produce a duplicate metadata event."
-echo "MongoDB unique index will reject it, which proves duplicates are prevented, but Spark may show Writing job failed."
-echo "For a clean log, stop Spark before replay."
-if [[ -t 0 ]]; then
-  read -r -p "Stop Spark if desired, then press Enter to continue with replay... "
-fi
-python -m src.verification.replay_one_file --file src/accelerate/accelerator.py
+echo "Step 8/12: Modify, clean, and replay only the controlled probe"
+python -m src.verification.replay_one_file \
+  --file "$probe" \
+  --modify \
+  --cleanup-neo4j-before-replay \
+  --wait-seconds 10
 
 echo ""
-echo "Step 10/10: Final verification after replay"
-python -m src.verification.mongodb_checks
-python -m src.verification.neo4j_checks
+echo "Step 9/12: Verify post-replay upsert and graph replacement"
+python -m src.verification.verify_mongodb_metadata --file "$probe"
+python -m src.verification.verify_neo4j_counts --file "$probe"
 
 echo ""
-echo "Expected success evidence:"
-echo "- Parser all: successful=120 failed=0"
-echo "- MongoDB: metadata documents=120"
-echo "- MongoDB: No duplicate metadata documents found"
-echo "- Neo4j: CPG nodes=114772"
-echo "- Neo4j: CPG edges=319284"
-echo "- Replay: Count delta nodes=+0 edges=+0"
-echo "- Replay: Duplicate count metadata_id=0 repo/file=0"
+echo "Step 10/12: Publish and inspect one controlled parser error"
+python -m src.verification.emit_parser_error_sample
+docker exec cpg-kafka kafka-console-consumer \
+  --bootstrap-server kafka:29092 \
+  --topic cpg.errors.v1 \
+  --from-beginning \
+  --max-messages 1 \
+  --timeout-ms 10000 || true
+
 echo ""
-echo "Pipeline demo complete. Log saved to $log_file"
+echo "Step 11/12: Restore the probe source for the next demo"
+python -m src.verification.replay_one_file --file "$probe" --restore --dry-run
+
+echo ""
+echo "Step 12/12: Preserve selected evidence"
+copy_evidence_log
+echo "Tracked evidence copy: $evidence_file"
+echo "Pipeline demo complete. You may now stop Spark in Terminal 1 with Ctrl+C."

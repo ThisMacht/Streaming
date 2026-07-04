@@ -185,7 +185,7 @@ For bash or zsh:
 
 ```bash
 PYTHONPATH=. spark-submit \
-  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.mongodb.spark:mongo-spark-connector_2.12:10.3.0 \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1 \
   src/spark_jobs/metadata_to_mongodb.py
 ```
 
@@ -193,21 +193,23 @@ For fish shell:
 
 ```fish
 env PYTHONPATH=. spark-submit \
-  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.mongodb.spark:mongo-spark-connector_2.12:10.3.0 \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1 \
   src/spark_jobs/metadata_to_mongodb.py
 ```
 
 The metadata ingestion job uses Apache Spark Structured Streaming to consume metadata events from Kafka topic `cpg.metadata.v1`.
 
-The parsed streaming DataFrame is written to MongoDB using the MongoDB Spark Connector with:
+Each parsed micro-batch is upserted to MongoDB with:
 
 ```python
-.writeStream.format("mongodb")
+.writeStream.foreachBatch(upsert_metadata_batch)
+ReplaceOne({"metadata_id": metadata_id}, document, upsert=True)
 ```
 
 A checkpoint directory is configured so Spark can resume from the last committed Kafka offsets after restart.
 
-If the same file is replayed multiple times, MongoDB may reject duplicate metadata documents because `metadata_id` has a unique index. This prevents duplicate metadata documents from being created.
+If the same file is replayed, the existing stable metadata document is replaced and receives a
+new `ingested_at` and `spark_batch_id`; its document count does not increase.
 
 For a clean demo run, reset MongoDB metadata and Spark checkpoint before starting Spark:
 
@@ -279,7 +281,7 @@ No duplicate metadata documents found.
 Run replay verification:
 
 ```bash
-python -m src.verification.replay_one_file --file src/accelerate/accelerator.py
+python -m src.verification.replay_one_file --file src/accelerate/_lab_replay_probe.py --modify
 ```
 
 ---
@@ -294,7 +296,8 @@ python -m src.parser_service.main --mode one --file src/accelerate/accelerator.p
 
 Neo4j uses `MERGE`, so existing nodes and edges are updated instead of duplicated.
 
-MongoDB uses a stable `metadata_id` with a unique index, so duplicate metadata documents are not created.
+MongoDB uses stable-key upsert plus a unique `metadata_id` index, so the existing document is
+updated without creating a duplicate.
 
 ---
 
@@ -377,14 +380,16 @@ Error example:
 E11000 duplicate key error collection: cpg_lab.source_metadata index: metadata_id_1
 ```
 
-This means the metadata document already exists.
+The current job uses stable-key `ReplaceOne(..., upsert=True)`, so this error usually means an old
+append-mode Spark process is still running or the deployed job has not been restarted after the
+code change. Stop only the old Spark process, then start the current Terminal 1 script. Do not
+reset data merely to hide the error.
 
-For a clean demo reset:
+If a deliberately clean demonstration is required, use the reset script only while Spark is
+stopped. It deletes MongoDB metadata and the metadata checkpoint/topic, so review it first:
 
 ```bash
-docker exec -i cpg-mongodb mongosh --eval 'db = db.getSiblingDB("cpg_lab"); db.source_metadata.drop();'
-docker exec -i cpg-mongodb mongosh < config/mongodb/indexes.js
-rm -rf data/checkpoints/mongodb_metadata
+./scripts/reset_demo_state.sh
 ```
 
 ---

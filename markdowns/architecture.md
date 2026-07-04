@@ -32,7 +32,7 @@ Neo4j           MongoDB
 | Kafka | Message broker for nodes, edges, metadata, and errors |
 | Neo4j Kafka Sink | Writes graph topology directly from Kafka to Neo4j |
 | Neo4j | Stores CPG nodes and edges |
-| Spark Structured Streaming | Reads metadata from Kafka and writes it through the MongoDB Spark Connector |
+| Spark Structured Streaming | Reads metadata from Kafka and upserts each micro-batch with PyMongo |
 | MongoDB | Stores source code metadata |
 
 ## Kafka topics
@@ -74,8 +74,10 @@ MongoDB uses a unique index on the stable identifier:
 metadata_id
 ```
 
-The metadata ingestion job writes its streaming DataFrame with
-`writeStream.format("mongodb")`. Spark checkpointing preserves committed Kafka offsets across
-job restarts. Because the connector uses append mode, a newly emitted event for an existing
-stable `metadata_id` can be rejected by MongoDB's unique index; verification reports both
-`metadata_id` and repository/file duplicate groups.
+The metadata ingestion job uses Structured Streaming `foreachBatch`, then bounded PyMongo
+`ReplaceOne(..., upsert=True)` operations keyed by `metadata_id` (falling back to repository and
+file path). Spark checkpointing preserves committed Kafka offsets across job restarts.
+
+Modified-file replay performs a file-scoped Neo4j cleanup before publishing replacement topology.
+The edge sink uses placeholder endpoint nodes, so cross-topic arrival order does not silently lose
+relationships; later node events fill their full properties.

@@ -38,35 +38,27 @@ In Terminal 2, run the pipeline demo:
 ./scripts/demo_terminal_2_run_pipeline.sh
 ```
 
-After full ingestion and the first verification, the Terminal 2 script pauses before replay. For
-the cleanest logs, stop Spark in Terminal 1 with `Ctrl+C`, then continue the replay in Terminal 2.
+Keep Spark running throughout baseline ingestion, controlled modification, replay, and post-replay
+verification. Stop Spark in Terminal 1 only after Terminal 2 completes.
 
-## Replay and duplicate-key behavior
+## Replay and upsert behavior
 
-Replay emits a metadata event for a file that already exists in MongoDB. If Spark is still
-running, the MongoDB Spark Connector may attempt to insert the duplicate event. MongoDB rejects
-it because `metadata_id` has a unique index. This is expected and confirms duplicate metadata
-documents are prevented. For a clean demo log, stop Spark before running replay.
+Terminal 2 prepares a small `_lab_replay_probe.py`, ingests its baseline, changes its content, and
+reprocesses only that file. Spark must remain active so `foreachBatch` can replace the existing
+MongoDB document using stable `metadata_id`. The document count stays constant while `file_hash`,
+`event_time`, `ingested_at`, and `spark_batch_id` reflect the replay.
+
+Before publishing the modified graph, the replay deletes CPG nodes belonging to only the target
+repository/file identity. This avoids stale topology caused by line-based node IDs.
 
 ## Expected final results
 
 ```text
-Parser:
-successful=120 failed=0
-
-MongoDB:
-metadata documents=120
-No duplicate metadata documents found.
-
-Neo4j:
-CPG nodes=114772
-CPG edges=319284
-
-Replay:
-nodes delta=+0
-edges delta=+0
-metadata duplicates=0
+Do not hard-code counts: the Accelerate revision and controlled probe affect totals. A successful
+run must show zero duplicate identity groups, zero unresolved Neo4j placeholders, a constant
+MongoDB document count across replay, and a target MongoDB `file_hash` equal to the modified
+probe hash.
 ```
 
-Screenshots are optional. The text files in `outputs/demo_logs/` are the primary demo evidence
-for this project.
+Raw logs remain in `outputs/demo_logs/`. The demo scripts copy selected latest logs into tracked
+`evidence/logs/`; inspect them for secrets or local paths before committing.

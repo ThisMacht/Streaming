@@ -1,0 +1,14 @@
+title: Big Data Lab 04 - Spark Streaming
+author: Team
+
+execute:
+  execute_notebooks: "off"
+
+html:
+  use_repository_button: true
+  use_issues_button: false
+  use_edit_page_button: false
+
+repository:
+  url: https://github.com/ThisMacht/Streaming
+  branch: main

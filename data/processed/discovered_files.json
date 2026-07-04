@@ -1,6 +1,6 @@
 {
   "repo_path": "data/raw/accelerate",
-  "total_files": 120,
+  "total_files": 121,
   "files": [
     "benchmarks/big_model_inference/big_model_inference.py",
     "benchmarks/big_model_inference/measures_util.py",
@@ -37,6 +37,7 @@
     "manim_animations/dataloaders/stage_6.py",
     "manim_animations/dataloaders/stage_7.py",
     "src/accelerate/__init__.py",
+    "src/accelerate/_lab_replay_probe.py",
     "src/accelerate/accelerator.py",
     "src/accelerate/big_modeling.py",
     "src/accelerate/checkpointing.py",

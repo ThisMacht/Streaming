@@ -33,13 +33,13 @@ fi
 
 echo "Registering Neo4j Kafka Sink Connector..."
 if curl -fsS http://localhost:8083/connectors/neo4j-cpg-sink > /dev/null; then
-  echo "Neo4j connector already exists; skipping registration."
-else
-  curl -fsS -X POST http://localhost:8083/connectors \
-    -H "Content-Type: application/json" \
-    --data @config/kafka/connect-neo4j-sink.json
-  echo ""
+  echo "Replacing existing connector so the checked-in Cypher configuration is active."
+  curl -fsS -X DELETE http://localhost:8083/connectors/neo4j-cpg-sink
 fi
+curl -fsS -X POST http://localhost:8083/connectors \
+  -H "Content-Type: application/json" \
+  --data @config/kafka/connect-neo4j-sink.json
+echo ""
 
 echo ""
 echo "Infrastructure initialized."

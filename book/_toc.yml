@@ -1,0 +1,11 @@
+format: jb-book
+root: intro
+chapters:
+  - file: architecture
+  - file: 01_repository_discovery
+  - file: 02_incremental_parser
+  - file: 03_kafka_topics
+  - file: 04_neo4j_ingestion
+  - file: 05_mongodb_ingestion
+  - file: 06_replay_verification
+  - file: conclusion

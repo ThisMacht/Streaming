@@ -38,6 +38,13 @@ logs/
 outputs/demo_logs/*.log
 !outputs/demo_logs/.gitkeep
 
+# Curated, sanitized demo evidence is intentionally versioned.
+!evidence/
+!evidence/logs/
+!evidence/logs/*.log
+!evidence/screenshots/
+!evidence/screenshots/*.png
+
 # Data
 data/raw/
 data/checkpoints/
@@ -96,3 +103,4 @@ screenshots/raw/
 # Agent
 .agent/
 .codex/
+book/_build/

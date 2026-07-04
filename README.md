@@ -3,8 +3,8 @@
 This lab incrementally parses Python files from
 [`huggingface/accelerate`](https://github.com/huggingface/accelerate) with the standard-library
 AST parser. It publishes stable node, edge, metadata, and error events to Kafka. The Neo4j Kafka
-Sink consumes graph events, while Spark Structured Streaming writes metadata through the MongoDB
-Spark Connector.
+Sink consumes graph events, while Spark Structured Streaming upserts metadata through bounded
+PyMongo bulk writes in `foreachBatch`.
 
 ## Quick start
 
@@ -65,7 +65,8 @@ Run all commands from the project root.
 
    The connector and task should both show `RUNNING`.
 
-   If the connector configuration is changed, recreate it:
+   If the connector configuration is changed, rerun `./scripts/init_infra.sh`, or recreate only
+   the connector:
 
    ```bash
    curl -X DELETE http://localhost:8083/connectors/neo4j-cpg-sink
@@ -91,7 +92,7 @@ Run all commands from the project root.
    source .venv/bin/activate
 
    PYTHONPATH=. spark-submit \
-     --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.mongodb.spark:mongo-spark-connector_2.12:10.3.0 \
+     --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1 \
      src/spark_jobs/metadata_to_mongodb.py
    ```
 
@@ -101,7 +102,7 @@ Run all commands from the project root.
    source .venv/bin/activate.fish
 
    env PYTHONPATH=. spark-submit \
-     --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.mongodb.spark:mongo-spark-connector_2.12:10.3.0 \
+     --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1 \
      src/spark_jobs/metadata_to_mongodb.py
    ```
 
@@ -135,10 +136,17 @@ Run all commands from the project root.
    python -m src.verification.mongodb_checks
    ```
 
-8. Modify or select a source file, then replay it to verify stable identifiers and unique indexes.
+8. Keep Spark running, then perform a controlled modified-file replay. The replay deletes graph
+   topology for only the probe file before publishing its replacement and upserts MongoDB by
+   stable `metadata_id`.
 
    ```bash
-   python -m src.verification.replay_one_file --file src/accelerate/accelerator.py
+   python -m src.verification.replay_one_file \
+     --file src/accelerate/_lab_replay_probe.py --modify
+   python -m src.verification.verify_mongodb_metadata \
+     --file src/accelerate/_lab_replay_probe.py
+   python -m src.verification.verify_neo4j_counts \
+     --file src/accelerate/_lab_replay_probe.py
    ```
 
 ## Useful links
@@ -161,7 +169,8 @@ password: password123
 
 * Use `source .venv/bin/activate.fish` when using fish shell.
 * Use `PYTHONPATH=.` or `env PYTHONPATH=.` when running Spark.
-* MongoDB may reject duplicate metadata during replay because `metadata_id` has a unique index.
+* Spark uses `foreachBatch` and PyMongo `ReplaceOne(..., upsert=True)` so replay updates the stable
+  metadata document instead of attempting a duplicate insert.
 * If Neo4j shows `0` nodes, check Kafka Connect logs:
 
   ```bash
@@ -191,6 +200,10 @@ Run the parser, verification, and replay workflow in Terminal 2:
 ./scripts/demo_terminal_2_run_pipeline.sh
 ```
 
-Generated logs are saved under `outputs/demo_logs/`. See the complete
+Keep Terminal 1 running until Terminal 2 finishes the post-replay MongoDB and Neo4j checks. Stop
+Spark with `Ctrl+C` only after Terminal 2 reports completion.
+
+Raw logs are saved under `outputs/demo_logs/`; selected latest logs are copied to tracked
+`evidence/logs/`. See the complete
 [demo logging guide](markdowns/demo_logging.md) for the two-terminal workflow, replay behavior,
 and expected results.
