@@ -1,0 +1,96 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+pip-wheel-metadata/
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# uv
+uv.lock
+
+# Jupyter
+.ipynb_checkpoints/
+.jupyter/
+.jupyter_cache/
+
+# Jupyter Book
+book/_build/
+_build/
+_site/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+
+# Data
+data/raw/
+data/checkpoints/
+data/processed/*.jsonl
+data/processed/*.tmp
+data/processed/*.log
+
+# Keep folder structure
+!data/processed/.gitkeep
+!data/raw/.gitkeep
+!data/checkpoints/.gitkeep
+!logs/.gitkeep
+
+# Spark
+spark-warehouse/
+metastore_db/
+derby.log
+.checkpoint/
+checkpoints/
+
+# Kafka / Docker local volumes
+docker-data/
+kafka-data/
+zookeeper-data/
+neo4j-data/
+mongodb-data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# PyCharm
+.idea/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# Coverage / tests
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Generated screenshots maybe too large; keep manually selected ones only
+screenshots/raw/
+
+# Agent
+.agent/
+.codex/

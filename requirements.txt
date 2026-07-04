@@ -1,0 +1,28 @@
+# Core parser service
+confluent-kafka==2.6.1
+pydantic==2.9.2
+python-dotenv==1.0.1
+orjson==3.10.7
+rich==13.8.1
+typer==0.12.5
+# Typer 0.12 uses Click's pre-8.2 boolean option API.
+click==8.1.7
+PyYAML==6.0.2
+
+# Database verification
+neo4j==5.24.0
+pymongo==4.8.0
+
+# Spark streaming
+pyspark==3.5.1
+
+# Notebook and report
+jupyterlab==4.2.5
+notebook==7.2.2
+jupyter-book==1.0.3
+pandas==2.2.2
+matplotlib==3.9.2
+
+# Code quality
+ruff==0.6.8
+black==24.8.0

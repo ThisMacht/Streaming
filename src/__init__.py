@@ -1,0 +1,1 @@
+"""Incremental CPG streaming pipeline."""

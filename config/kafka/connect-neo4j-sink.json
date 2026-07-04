@@ -1,0 +1,21 @@
+{
+  "name": "neo4j-cpg-sink",
+  "config": {
+    "connector.class": "streams.kafka.connect.sink.Neo4jSinkConnector",
+    "tasks.max": "1",
+
+    "topics": "cpg.nodes.v1,cpg.edges.v1",
+
+    "neo4j.server.uri": "bolt://neo4j:7687",
+    "neo4j.authentication.basic.username": "neo4j",
+    "neo4j.authentication.basic.password": "password123",
+
+    "neo4j.topic.cypher.cpg.nodes.v1": "MERGE (r:Repository {name: event.repo_name}) MERGE (f:SourceFile {id: event.repo_name + ':' + event.file_path}) SET f.repo_name = event.repo_name, f.path = event.file_path, f.file_hash = event.file_hash MERGE (r)-[:CONTAINS_FILE]->(f) MERGE (n:CPGNode {id: event.node_id}) SET n.repo_name = event.repo_name, n.file_path = event.file_path, n.file_hash = event.file_hash, n.type = event.node_type, n.name = event.name, n.lineno = event.lineno, n.col_offset = event.col_offset, n.schema_version = event.schema_version, n.updated_at = event.event_time MERGE (f)-[:CONTAINS_NODE]->(n)",
+
+    "neo4j.topic.cypher.cpg.edges.v1": "MATCH (source:CPGNode {id: event.source_id}) MATCH (target:CPGNode {id: event.target_id}) MERGE (source)-[rel:CPG_EDGE {id: event.edge_id}]->(target) SET rel.type = event.edge_type, rel.repo_name = event.repo_name, rel.file_path = event.file_path, rel.file_hash = event.file_hash, rel.schema_version = event.schema_version, rel.updated_at = event.event_time",
+
+    "errors.tolerance": "all",
+    "errors.log.enable": "true",
+    "errors.log.include.messages": "true"
+  }
+}
