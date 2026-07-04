@@ -23,6 +23,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Show repository tree
+        run: |
+          pwd
+          ls -la
+          ls -la book
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -35,7 +41,12 @@ jobs:
 
       - name: Build Jupyter Book
         run: |
-          jupyter-book build book
+          jupyter-book clean book --all
+          jupyter-book build book --builder html
+          echo "Checking generated files:"
+          find book -maxdepth 4 -type d | sort
+          ls -la book/_build/html
+          test -f book/_build/html/index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
@@ -43,12 +54,12 @@ jobs:
           path: book/_build/html
 
   deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
-    runs-on: ubuntu-latest
-    needs: build
 
     steps:
       - name: Deploy to GitHub Pages
