@@ -1,12 +1,21 @@
-"""Build lightweight CFG, DFG, and CALL relationships."""
+"""Build lightweight intra-file CFG, DFG, and CALL approximations.
 
-from collections import defaultdict
+This lab intentionally stays bounded to one file. CFG edges represent source
+order rather than complete branch semantics. DFG edges connect the latest
+simple ``Name`` store to subsequent loads; scope/import/alias analysis remains
+outside the lab implementation.
+"""
+
+import ast
 
 from src.parser_service.ast_parser import ParsedAstNode
 
 
 def _ordered(nodes: list[ParsedAstNode]) -> list[ParsedAstNode]:
-    return sorted(nodes, key=lambda node: (node.lineno, node.col_offset, node.node_id))
+    return sorted(
+        nodes,
+        key=lambda node: (node.lineno, node.col_offset, node.structural_path, node.node_id),
+    )
 
 
 def build_cfg_edges(nodes: list[ParsedAstNode]) -> list[tuple[str, str]]:
@@ -31,16 +40,17 @@ def build_call_edges(nodes: list[ParsedAstNode]) -> list[tuple[str, str]]:
 
 
 def build_dfg_edges(nodes: list[ParsedAstNode]) -> list[tuple[str, str]]:
-    occurrences: dict[str, list[ParsedAstNode]] = defaultdict(list)
+    """Connect the latest simple assignment of a name to later reads."""
+    last_definition: dict[str, ParsedAstNode] = {}
+    result: list[tuple[str, str]] = []
     for node in _ordered(nodes):
-        if node.node_type == "Name" and node.name:
-            occurrences[node.name].append(node)
-    return [
-        (left.node_id, right.node_id)
-        for group in occurrences.values()
-        for left, right in zip(group, group[1:], strict=False)
-        if left.node_id != right.node_id
-    ]
+        if not isinstance(node.ast_obj, ast.Name) or not node.name:
+            continue
+        if isinstance(node.ast_obj.ctx, ast.Store):
+            last_definition[node.name] = node
+        elif isinstance(node.ast_obj.ctx, ast.Load) and node.name in last_definition:
+            result.append((last_definition[node.name].node_id, node.node_id))
+    return result
 
 
 def build_cpg_edges(

@@ -214,3 +214,26 @@ Raw logs are saved under `outputs/demo_logs/`; selected latest logs are copied t
 `evidence/logs/`. See the complete
 [demo logging guide](markdowns/demo_logging.md) for the two-terminal workflow, replay behavior,
 and expected results.
+
+## Verification Commands
+
+```bash
+pytest -q
+jupyter-book build book
+./scripts/capture_kafka_samples.sh
+python -m src.verification.verify_checkpoint_resume \
+  --output evidence/logs/checkpoint_resume.log
+python -m src.verification.verify_mongodb_metadata
+python -m src.verification.verify_neo4j_counts
+python -m src.verification.replay_one_file \
+  --file src/accelerate/_lab_replay_probe.py --modify
+```
+
+Run checkpoint verification after restarting Spark with the same checkpoint and while no new
+events are being published. Generate a controlled error first with
+`python -m src.verification.emit_parser_error_sample` if the error topic is empty.
+
+Published Jupyter Book: <https://thismacht.github.io/Streaming/>
+
+When GitHub Actions deploys the site, `book/_build` is a local build artifact and should not be
+committed.

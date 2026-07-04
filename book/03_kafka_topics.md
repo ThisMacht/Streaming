@@ -104,6 +104,38 @@ docker exec cpg-kafka kafka-console-consumer \
   --from-beginning --max-messages 1
 ```
 
+## Raw Kafka Samples
+
+The four raw broker samples are captured with:
+
+```bash
+./scripts/capture_kafka_samples.sh
+```
+
+The helper prints the Kafka key before the JSON value and writes one message per topic:
+
+| Topic | Evidence file | Expected key |
+|---|---|---|
+| `cpg.nodes.v1` | `evidence/kafka/node-sample.txt` | `node_id` |
+| `cpg.edges.v1` | `evidence/kafka/edge-sample.txt` | `edge_id` |
+| `cpg.metadata.v1` | `evidence/kafka/metadata-sample.txt` | `metadata_id` |
+| `cpg.errors.v1` | `evidence/kafka/error-sample.txt` | `repo_name:file_path` |
+
+Each captured JSON value includes `schema_version` and `event_time`. Node events also expose the
+AST `structural_path`; graph and metadata keys use deterministic IDs so identical-content replay
+addresses the same downstream entity. If the error sample is empty, first run
+`python -m src.verification.emit_parser_error_sample` and capture again. The tracked sample files
+are authoritative raw excerpts rather than reformatted examples.
+
+Captured excerpts (values shortened only after the fields relevant to this check):
+
+```text
+node key | {"schema_version":"1.0","event_time":"2026-07-04T11:01:47.041898Z",...,"structural_path":"module.body[0].args",...}
+edge key | {"schema_version":"1.0","event_time":"2026-07-04T11:01:47.041898Z",...,"edge_type":"AST","source_id":"...","target_id":"..."}
+metadata key | {"schema_version":"1.0","event_time":"2026-07-04T11:01:47.041898Z",...,"metadata_id":"59f203...561ea",...}
+accelerate:src/accelerate/_lab_parser_error.py | {"schema_version":"1.0","event_time":"2026-07-04T11:01:47.360504Z",...,"error_type":"SyntaxError",...}
+```
+
 ## Reflection
 
 Separate topics make ownership explicit: Neo4j consumes topology, Spark consumes metadata, and

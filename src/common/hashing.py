@@ -1,11 +1,19 @@
 """Stable identifiers used to make replay idempotent."""
 
 import hashlib
+import json
 from pathlib import Path
+from typing import Any
 
 
 def sha256_text(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def stable_hash(value: Any) -> str:
+    """Hash JSON-compatible data with deterministic key and Unicode handling."""
+    serialized = json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    return sha256_text(serialized)
 
 
 def file_sha256(path: Path) -> str:
@@ -23,9 +31,28 @@ def make_node_id(
     lineno: int,
     col_offset: int,
     name: str | None = None,
+    structural_path: str = "",
+    end_lineno: int = 0,
+    end_col_offset: int = 0,
 ) -> str:
-    return sha256_text(
-        "\x1f".join((repo_name, file_path, node_type, str(lineno), str(col_offset), name or ""))
+    """Build a stable per-occurrence AST node ID.
+
+    New optional fields preserve compatibility with callers using the original
+    positional signature while structural paths distinguish positionless AST
+    contexts and operators.
+    """
+    return stable_hash(
+        {
+            "repo_name": repo_name,
+            "file_path": file_path,
+            "node_type": node_type,
+            "structural_path": structural_path,
+            "lineno": lineno,
+            "col_offset": col_offset,
+            "end_lineno": end_lineno,
+            "end_col_offset": end_col_offset,
+            "name": name or "",
+        }
     )
 
 

@@ -18,8 +18,11 @@ class NodeEvent(BaseEvent):
     node_id: str
     node_type: str
     name: str | None = None
+    structural_path: str
     lineno: int
     col_offset: int
+    end_lineno: int
+    end_col_offset: int
 
 
 class EdgeEvent(BaseEvent):

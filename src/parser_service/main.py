@@ -1,7 +1,6 @@
 """CLI for parsing and publishing one file at a time."""
 
 import json
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Annotated
 
@@ -9,8 +8,7 @@ import typer
 
 from src.common.config import Settings, load_settings
 from src.common.logging_utils import get_logger
-from src.common.schemas import ErrorEvent
-from src.parser_service.event_builder import SCHEMA_VERSION, build_events_for_file
+from src.parser_service.event_builder import build_error_event, build_events_for_file
 from src.parser_service.kafka_producer import CpgKafkaProducer
 from src.repo_tools.discover_files import discover_python_files, save_discovered_files
 
@@ -71,14 +69,7 @@ def process_file(
     except Exception as exc:  # one malformed file must not terminate a repository run
         logger.exception("Failed to parse %s", display_path)
         if not dry_run and producer is not None:
-            error = ErrorEvent(
-                schema_version=SCHEMA_VERSION,
-                event_time=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-                repo_name=settings.repo_name,
-                file_path=display_path,
-                error_type=type(exc).__name__,
-                error_message=str(exc),
-            )
+            error = build_error_event(settings.repo_name, display_path, exc)
             producer.send_error(settings.kafka_topic_errors, error)
         return False
 

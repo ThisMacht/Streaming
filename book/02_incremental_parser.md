@@ -84,6 +84,13 @@ The project generates deterministic identifiers for:
 
 The metadata identity is based on repository name and file path. This allows the same file to update the same MongoDB metadata document during replay.
 
+Node identity additionally contains a deterministic AST `structural_path`, such as
+`module.body[0].value.left` or `module.body[1].targets[0].ctx`, plus start/end source positions and
+the node name when present. The path distinguishes positionless context and operator occurrences
+such as `Load`, `Store`, and `Add`; these nodes can otherwise share the same zero-valued source
+position. Tests verify that IDs are unique within one file and stable when identical content is
+reprocessed at the same repository path.
+
 ## Parser Output
 
 A successful parser run emits three main groups of events:
@@ -171,7 +178,17 @@ The parser emits several edge categories.
 | DFG | Approximate data dependency between repeated identifiers |
 | CALL | Function call relationships |
 
-The CFG, DFG, and CALL edges are lightweight approximations. They are useful for this lab demonstration, but they are not a complete semantic program analysis engine.
+The CFG, DFG, and CALL edges are lightweight intra-file approximations:
+
+- CFG connects nodes in deterministic source/structural order; it does not model complete branch,
+  loop, exception, or basic-block semantics.
+- DFG connects the latest simple `ast.Name` assignment (`Store`) to later reads (`Load`) of the
+  same name. It deliberately avoids the earlier Load-to-Load chaining behavior.
+- CALL resolves named functions found in the same file and does not fully resolve imports,
+  methods, dynamic dispatch, or cross-file targets.
+
+These limits preserve one-file-at-a-time bounded memory for the lab scope and avoid claiming the
+precision of a full static-analysis engine.
 
 ## Verification
 

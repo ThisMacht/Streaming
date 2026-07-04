@@ -21,8 +21,9 @@ evidence for the major pipeline paths.
 - structured `SyntaxError` publication without terminating the valid-file pipeline.
 
 The replay evidence was particularly useful: MongoDB remained at 121 documents while the target
-hash, statistics, ingestion time, and batch marker changed. Neo4j replaced the probe's 10-node,
-18-edge baseline with 13 nodes and 25 edges, with no duplicate IDs or unresolved placeholders.
+hash, statistics, ingestion time, and batch marker changed. With structural-path identity, Neo4j
+replaced the probe's 10-node/18-edge baseline with 14 nodes/26 edges, with no duplicate IDs or
+unresolved placeholders.
 
 ## Issues Encountered
 
@@ -41,7 +42,8 @@ addressed with placeholder endpoints and a verifier that detects unresolved plac
 - CFG, DFG, and CALL relationships are lightweight approximations.
 - CALL resolution is primarily intra-file and does not fully resolve imports, dynamic dispatch, or
   cross-file targets.
-- Node identity includes line and column position, so source edits may change many IDs.
+- Node identity includes a stable structural path and source span. Identical content is stable and
+  positionless nodes remain unique, although structural edits may still change affected paths.
 - File-level cleanup is a simple modified-file replay strategy and does not retain graph history.
 - MongoDB writes use connector batch replace/upsert inside `foreachBatch`; verification scripts
   still use PyMongo for read-only checks.
@@ -52,3 +54,15 @@ Future work could add scope-aware data flow, branch-aware control flow, cross-mo
 resolution, and parser support for more languages. A generation-based graph model could atomically
 activate a new file version while retaining history. Additional monitoring could expose Kafka lag,
 Spark query progress, dead-letter volume, and unresolved placeholder counts as operational metrics.
+
+## Evidence Index
+
+| Requirement | Evidence file/log/screenshot |
+|---|---|
+| Four Kafka event contracts and keys | `evidence/kafka/node-sample.txt`, `edge-sample.txt`, `metadata-sample.txt`, `error-sample.txt` |
+| Parser identity and schema tests | `evidence/logs/pytest.log` |
+| Spark checkpoint idle resume | `evidence/logs/checkpoint_resume.log` |
+| MongoDB metadata and replay | `book/images/mongo-metadata-document.png`, `mongo-replay-after.png`, `evidence/logs/terminal_2_pipeline_latest.log` |
+| Neo4j counts, graph, and duplicate checks | `book/images/neo4j-counts.png`, `neo4j-graph-view.png`, `evidence/logs/terminal_2_pipeline_latest.log` |
+| Controlled modified-file replay | `evidence/logs/identity_replay_verification.log`, `terminal_2_pipeline_latest.log`, and Task 6 before/after table |
+| Architecture routing | `book/images/architecture.svg` |

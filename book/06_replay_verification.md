@@ -47,12 +47,12 @@ python -m src.verification.replay_one_file \
 | `file_hash` changed | Controlled source edit is real | `1ebfb6...ba523` → `807314...0e0fd` |
 | MongoDB document count | No increase | 121 → 121; delta `+0` |
 | Ingestion progress | Later write is visible | `spark_batch_id` 1 → 7 and new `ingested_at` |
-| Neo4j replacement | Old file topology removed, replacement added | Cleanup deleted 10 nodes; file became 13 nodes/25 edges |
+| Neo4j replacement | Old file topology removed, replacement added | Current identity-hardened verifier reports 14 nodes/26 edges |
 | Duplicate identities | No duplicate groups | MongoDB, node ID, and edge ID checks all report 0 |
 
 The modified source has two functions instead of one. Consequently, a global node/edge delta of
-zero is not expected. The recorded Neo4j delta was `+3` nodes and `+7` CPG edges, matching the
-target-file change from 10/18 to 13/25.
+zero is not expected. With structural-path identity, the target changes from 10/18 to 14/26; the
+additional node/edge preserves a positionless AST occurrence that the earlier identity collapsed.
 
 ## MongoDB Evidence
 
@@ -60,20 +60,24 @@ target-file change from 10/18 to 13/25.
 :name: mongo-replay-after
 :width: 90%
 
-MongoDB metadata after controlled modified-file replay, showing the new hash, counts,
-`ingested_at`, and `spark_batch_id: 7`.
+MongoDB metadata from the original controlled replay, before structural-path identity hardening.
 ```
 
-The screenshot and log agree on `event_time` `2026-07-04T07:23:51.440842Z`, six source lines, two
-functions, 13 nodes, 25 edges, and the modified file hash. The log also records
-`metadata_documents=+0` and zero duplicate metadata identities.
+The original screenshot records 13 nodes/25 edges. After preserving each positionless AST
+occurrence, `evidence/logs/identity_replay_verification.log` records the same stable metadata ID
+and modified hash with 14 nodes/26 edges, 121 total documents, and zero duplicate identities.
 
 ## Neo4j Evidence
 
-Before replay, the probe had 10 nodes and 18 CPG edges. The cleanup deleted those 10 nodes and
-their attached relationships before publishing the replacement. After replay, it had 13 nodes and
-25 CPG edges. Global verification reported zero duplicate node IDs, zero duplicate edge IDs, and
-zero unresolved placeholders.
+Before replay, the probe had 10 nodes and 18 CPG edges. File-scoped cleanup removes those nodes and
+their relationships before replacement. The current verifier reports 14 nodes and 26 edges after
+replay, zero duplicate node IDs, zero duplicate edge IDs, and zero unresolved placeholders.
+
+This is a file-scoped replacement protocol, not a Spark graph path. Before replaying a modified
+file, the verifier removes only previous topology for the target `repo_name` and `file_path` in
+Neo4j. Updated node and edge events then travel through Kafka and the Neo4j Kafka Connector, whose
+Cypher uses `MERGE`. Duplicate `node_id` and `edge_id` checks remain zero; Spark consumes only the
+metadata topic.
 
 ## Spark Checkpoint Evidence
 
@@ -82,6 +86,34 @@ through replay, and the MongoDB document's batch marker advanced from 1 to 7 wit
 `ingested_at`. This demonstrates that a later streaming micro-batch performed the upsert. The book
 does not infer exact Kafka offsets from the batch number; offset recovery is provided by Spark's
 checkpoint files.
+
+## Spark checkpoint resume verification
+
+Restart the Spark metadata job with the unchanged `checkpointLocation`, publish no new events,
+and run in another terminal:
+
+```bash
+python -m src.verification.verify_checkpoint_resume \
+  --sleep-seconds 10 \
+  --output evidence/logs/checkpoint_resume.log
+```
+
+The verifier records checkpoint commit/offset/source artifacts and compares the MongoDB document
+count before and after an idle window. A passing result states `PASSED checkpoint resumed without
+duplicating unchanged metadata`: the count remains constant because the resumed query skips
+offsets already committed in the same checkpoint. This check must run without a concurrent
+publisher and complements the modified-file replay test.
+
+The tracked run in `evidence/logs/checkpoint_resume.log` recorded:
+
+```text
+checkpoint_exists=True
+checkpoint_artifacts_before=5
+checkpoint_artifacts_after=5
+metadata_count_before=121
+metadata_count_after=121
+result=PASSED checkpoint resumed without duplicating unchanged metadata
+```
 
 ## Reflection
 

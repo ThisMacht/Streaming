@@ -1,0 +1,59 @@
+[07/04/26 18:05:44] INFO     MongoDB metadata documents: 121                    
+                    INFO     Duplicate metadata_id groups: 0                    
+                    INFO     Duplicate repo/file groups: 0                      
+                    INFO     Target metadata: {'event_time':                    
+                             '2026-07-04T11:04:09.564741Z', 'file_path':        
+                             'src/accelerate/_lab_replay_probe.py',             
+                             'metadata_id':                                     
+                             '59f203db77b71174cb16b9dba979e76280d162b3718b611ee0
+                             5a2ef28bc561ea', 'file_hash':                      
+                             '80731426ce3a3bec87cf61c7c01778c5034da283613482e14c
+                             8af88d5740e0fd', 'node_count': 14, 'edge_count':   
+                             26, 'ingested_at': datetime.datetime(2026, 7, 4,   
+                             11, 4, 45, 832000), 'spark_batch_id': 1}           
+[07/04/26 18:05:46] INFO     Neo4j totals: nodes=114786 edges=319310            
+                    INFO     Duplicate node IDs: 0                              
+                    INFO     Duplicate edge IDs: 0                              
+                    INFO     Unresolved placeholder nodes: 0                    
+                    INFO     Target file src/accelerate/_lab_replay_probe.py:   
+                             nodes=14 edges=26                                  
+                    INFO     Sample edge: {'source_id':                         
+                             'a21303ccbe44bd9f195fb305132847c44d3ce306de9d1e643e
+                             643d08c9f06735', 'source_type': 'FunctionDef',     
+                             'edge_id':                                         
+                             'bc7e0f261b86fad8352d333b2ceac82490aa1b96d493a3d678
+                             0eba3f39a11604', 'edge_type': 'AST', 'target_id':  
+                             '8396af18a24df24d9a330749da0cd6e84d2fe89310a49dc3f4
+                             fc9fd99053c6ed', 'target_type': 'Return'}          
+                    INFO     Sample edge: {'source_id':                         
+                             'a21303ccbe44bd9f195fb305132847c44d3ce306de9d1e643e
+                             643d08c9f06735', 'source_type': 'FunctionDef',     
+                             'edge_id':                                         
+                             '48c203c4ee35ff771279dd28ab99c3c322bf6d6fb7f64c7904
+                             13519ae15457b3', 'edge_type': 'AST', 'target_id':  
+                             '3ae824950f95ebadd259eb6c27eaaa2278e64ac8e6e376c504
+                             042e54b165557c', 'target_type': 'arguments'}       
+                    INFO     Sample edge: {'source_id':                         
+                             'a21303ccbe44bd9f195fb305132847c44d3ce306de9d1e643e
+                             643d08c9f06735', 'source_type': 'FunctionDef',     
+                             'edge_id':                                         
+                             '5496daff3339a70be6999f6131c870e3d733a944e97c95bd13
+                             754f6b56375164', 'edge_type': 'CFG', 'target_id':  
+                             '4b4b2720d018bcf66e74a94b15e1b23c6639b9abde29fa150c
+                             a46c958613ee17', 'target_type': 'arg'}             
+                    INFO     Sample edge: {'source_id':                         
+                             '8396af18a24df24d9a330749da0cd6e84d2fe89310a49dc3f4
+                             fc9fd99053c6ed', 'source_type': 'Return',          
+                             'edge_id':                                         
+                             'd28a8c0f27889d477004f24c78d958fa7f29553033db894a49
+                             fc708d7f4ed407', 'edge_type': 'AST', 'target_id':  
+                             '9bb5f492af742690e304fdfa4874fe7295ed01f9a88e683baf
+                             66a43d9dfa097a', 'target_type': 'BinOp'}           
+                    INFO     Sample edge: {'source_id':                         
+                             '8396af18a24df24d9a330749da0cd6e84d2fe89310a49dc3f4
+                             fc9fd99053c6ed', 'source_type': 'Return',          
+                             'edge_id':                                         
+                             '4839d6f47b5ad2685c234334b72b651563f1f2b4864573ac59
+                             ea8ee3115f6dd8', 'edge_type': 'CFG', 'target_id':  
+                             '9bb5f492af742690e304fdfa4874fe7295ed01f9a88e683baf
+                             66a43d9dfa097a', 'target_type': 'BinOp'}           

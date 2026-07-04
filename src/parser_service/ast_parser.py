@@ -1,6 +1,7 @@
 """Python AST extraction with stable node identities."""
 
 import ast
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -13,9 +14,28 @@ class ParsedAstNode:
     node_id: str
     node_type: str
     name: str | None
+    structural_path: str
     lineno: int
     col_offset: int
+    end_lineno: int
+    end_col_offset: int
     ast_obj: ast.AST
+
+
+def iter_ast_with_path(root: ast.AST) -> Iterator[tuple[ast.AST, str]]:
+    """Yield every AST occurrence with a deterministic field/index path."""
+
+    def walk(node: ast.AST, path: str) -> Iterator[tuple[ast.AST, str]]:
+        yield node, path
+        for field, value in ast.iter_fields(node):
+            if isinstance(value, ast.AST):
+                yield from walk(value, f"{path}.{field}")
+            elif isinstance(value, list):
+                for index, child in enumerate(value):
+                    if isinstance(child, ast.AST):
+                        yield from walk(child, f"{path}.{field}[{index}]")
+
+    yield from walk(root, "module")
 
 
 def _relative_file_path(repo_path: Path, file_path: Path) -> tuple[Path, str]:
@@ -59,6 +79,8 @@ def _node_name(node: ast.AST) -> str | None:
         return f"{node.module or ''}:{names}"
     if isinstance(node, ast.Attribute):
         return node.attr
+    if isinstance(node, ast.arg):
+        return node.arg
     return None
 
 
@@ -70,23 +92,49 @@ def parse_python_file(
     source = absolute.read_text(encoding="utf-8")
     tree = ast.parse(source, filename=relative)
     nodes_by_id: dict[str, ParsedAstNode] = {}
+    ids_by_path: dict[str, str] = {}
     edges: set[tuple[str, str]] = set()
 
-    def visit(node: ast.AST, parent_id: str | None = None) -> None:
+    for node, structural_path in iter_ast_with_path(tree):
         node_type = type(node).__name__
         name = _node_name(node)
         lineno = int(getattr(node, "lineno", 0) or 0)
         col_offset = int(getattr(node, "col_offset", 0) or 0)
-        node_id = make_node_id(repo_name, relative, node_type, lineno, col_offset, name)
-        nodes_by_id.setdefault(
-            node_id, ParsedAstNode(node_id, node_type, name, lineno, col_offset, node)
+        end_lineno = int(getattr(node, "end_lineno", 0) or 0)
+        end_col_offset = int(getattr(node, "end_col_offset", 0) or 0)
+        node_id = make_node_id(
+            repo_name,
+            relative,
+            node_type,
+            lineno,
+            col_offset,
+            name,
+            structural_path,
+            end_lineno,
+            end_col_offset,
         )
-        if parent_id is not None and parent_id != node_id:
-            edges.add((parent_id, node_id))
-        for child in ast.iter_child_nodes(node):
-            visit(child, node_id)
+        if node_id in nodes_by_id:
+            raise ValueError(f"Duplicate node ID at structural path {structural_path}")
+        if structural_path in ids_by_path:
+            raise ValueError(f"Duplicate AST structural path {structural_path}")
+        nodes_by_id[node_id] = ParsedAstNode(
+            node_id,
+            node_type,
+            name,
+            structural_path,
+            lineno,
+            col_offset,
+            end_lineno,
+            end_col_offset,
+            node,
+        )
+        ids_by_path[structural_path] = node_id
 
-    visit(tree)
+    for structural_path, node_id in ids_by_path.items():
+        if structural_path == "module":
+            continue
+        parent_path = structural_path.rsplit(".", 1)[0]
+        edges.add((ids_by_path[parent_path], node_id))
     metadata = {
         "line_count": len(source.splitlines()),
         "function_count": sum(

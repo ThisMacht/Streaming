@@ -23,3 +23,17 @@ ignore = ["E501"]
 [tool.jupyter-book]
 title = "Incremental CPG Streaming Pipeline"
 author = "Your Team"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+norecursedirs = [
+    "data",
+    "docker-data",
+    "book",
+    "outputs",
+    "evidence",
+    ".venv",
+    ".git",
+    "__pycache__",
+]
