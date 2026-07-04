@@ -170,3 +170,27 @@ password: password123
 
 See [setup](markdowns/setup.md), [source usage](markdowns/src_usage.md), and
 [architecture](markdowns/architecture.md) for details.
+
+## Demo logs
+
+To generate timestamped text logs for a full demo run, first reset only the metadata demo state:
+
+```bash
+./scripts/reset_demo_state.sh
+```
+
+Then start Spark in Terminal 1 and keep it running:
+
+```bash
+./scripts/demo_terminal_1_spark.sh
+```
+
+Run the parser, verification, and replay workflow in Terminal 2:
+
+```bash
+./scripts/demo_terminal_2_run_pipeline.sh
+```
+
+Generated logs are saved under `outputs/demo_logs/`. See the complete
+[demo logging guide](markdowns/demo_logging.md) for the two-terminal workflow, replay behavior,
+and expected results.

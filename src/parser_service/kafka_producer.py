@@ -21,19 +21,34 @@ def _delivery_report(error: KafkaError | None, message: Message) -> None:
 
 class CpgKafkaProducer:
     def __init__(self, bootstrap_servers: str):
-        self._producer = Producer({"bootstrap.servers": bootstrap_servers})
+        self._producer = Producer(
+            {
+                "bootstrap.servers": bootstrap_servers,
+                "queue.buffering.max.messages": 1000000,
+                "queue.buffering.max.kbytes": 1048576,
+                "linger.ms": 5,
+            }
+        )
 
     def _send(
         self, topic: str, key: str, event: NodeEvent | EdgeEvent | MetadataEvent | ErrorEvent
     ) -> None:
-        # poll(0) serves queued delivery callbacks and prevents queue growth.
-        self._producer.produce(
-            topic,
-            key=key.encode(),
-            value=to_json_bytes(event),
-            on_delivery=_delivery_report,
-        )
-        self._producer.poll(0)
+        payload = to_json_bytes(event)
+
+        while True:
+            try:
+                self._producer.produce(
+                    topic, 
+                    key=key.encode(), 
+                    value=payload, 
+                    on_delivery=_delivery_report,
+                )
+                self._producer.poll(0)
+                return
+            except BufferError:
+                # Local Kafka producer queue is full.
+                # Serve delivery callbacks and wait until there is room.
+                self._producer.poll(1)
 
     def send_node(self, topic: str, event: NodeEvent) -> None:
         self._send(topic, event.node_id, event)

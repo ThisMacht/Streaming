@@ -35,6 +35,8 @@ _site/
 # Logs
 logs/
 *.log
+outputs/demo_logs/*.log
+!outputs/demo_logs/.gitkeep
 
 # Data
 data/raw/
