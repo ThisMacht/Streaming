@@ -39,11 +39,12 @@ In Terminal 2, run the pipeline demo:
 ```
 
 Keep Spark running throughout baseline ingestion, controlled modification, replay, and post-replay
-verification. Stop Spark in Terminal 1 only after Terminal 2 completes.
+verification. Stop Spark in Terminal 1 only after Terminal 2 completes, using `Ctrl+C` once. The
+wrapper records `Spark streaming job was stopped by user after verification completed.`
 
-Stopping `spark-submit` with `Ctrl+C` can append Py4J shutdown traceback lines to the Terminal 1
-log even after successful batches. Judge ingestion from the MongoDB verification, batch/checkpoint
-progress, and Terminal 2 results rather than treating those shutdown-only lines as a failed batch.
+A forced or repeated shutdown can still append Py4J traceback lines after successful batches. Such
+shutdown-only lines are an artifact, not evidence that a processed micro-batch failed; a clean log
+with the wrapper completion message is preferred.
 
 ## Replay and upsert behavior
 
@@ -71,3 +72,22 @@ The error topic is not reset by `reset_demo_state.sh`. Step 10 consumes from the
 `--max-messages 1`, so an older error event may be displayed when the topic already contains data.
 For evidence tied uniquely to the newly generated controlled error, clear/recreate the error topic
 before the demo or consume using a fresh consumer group/known offset.
+
+## Regenerate submission evidence
+
+Run these commands from the project root. The scripts resolve the project root themselves, so
+they also work when invoked while the current directory is `scripts/`.
+
+```bash
+./scripts/init_infra.sh
+./scripts/check_infra.sh
+./scripts/create_topics.sh
+./scripts/demo_terminal_1_spark.sh        # Terminal 1; leave running
+./scripts/demo_terminal_2_run_pipeline.sh # Terminal 2
+./scripts/capture_kafka_samples.sh
+./scripts/capture_connect_status.sh
+./scripts/capture_mongodb_indexes.sh
+```
+
+The scripts write curated latest-run artifacts to `evidence/logs/` and raw JSON Kafka values to
+`evidence/kafka/` while continuing to display output in the terminal.

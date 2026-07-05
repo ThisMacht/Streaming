@@ -51,6 +51,8 @@ Then check the infrastructure:
 
 ```bash
 ./scripts/check_infra.sh
+./scripts/capture_connect_status.sh
+./scripts/capture_mongodb_indexes.sh
 ```
 
 Run `./scripts/init_infra.sh` again only when one of the following happens:
@@ -150,6 +152,8 @@ Keep Spark running until the modified replay and both database verification comm
 | `init_infra.sh` | Starts Compose, waits 20 seconds, creates topics, applies Neo4j constraints and MongoDB indexes, waits for Kafka Connect, then replaces/registers the Neo4j sink | Replaces the existing `neo4j-cpg-sink` connector configuration |
 | `create_topics.sh` | Creates the four CPG topics with `--if-not-exists` and lists topics | Creates topics only; it does not delete messages |
 | `check_infra.sh` | Prints containers, topics, connector list, and Neo4j connector status | Read-only, but topic/REST checks use `|| true`; inspect the output because a zero exit code alone does not prove readiness |
+| `capture_connect_status.sh` | Captures connector list and Neo4j sink status JSON | Read-only; fails when Kafka Connect or the named connector is unavailable |
+| `capture_mongodb_indexes.sh` | Captures `source_metadata.getIndexes()` | Read-only; fails when MongoDB is unavailable |
 | `run_metadata_stream.sh` | Activates `.venv` and runs the Spark metadata stream | Writes MongoDB metadata and advances the Spark checkpoint |
 | `demo_terminal_1_spark.sh` | Runs the same Spark job with timestamped terminal logging | Writes `outputs/demo_logs/` and copies the latest log to `evidence/logs/` |
 | `demo_terminal_2_run_pipeline.sh` | Runs the 12-step parser, verification, replay, and error-event demo | Publishes Kafka events, updates both databases, changes then restores the replay probe, and writes evidence logs |

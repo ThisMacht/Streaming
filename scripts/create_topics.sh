@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-set -e
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$PROJECT_ROOT"
+mkdir -p evidence/logs
+LOG_FILE="evidence/logs/create_topics.log"
+: > "$LOG_FILE"
+exec > >(tee -a "$LOG_FILE") 2>&1
 
 echo "Creating Kafka topics..."
 

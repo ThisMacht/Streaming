@@ -2,7 +2,8 @@ title: Big Data Lab 04 - Spark Streaming
 author: Team
 
 execute:
-  execute_notebooks: "off"
+  # This read-only evidence notebook is safe to execute during builds.
+  execute_notebooks: "cache"
 
 html:
   use_repository_button: true

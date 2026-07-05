@@ -1,17 +1,18 @@
 Starting Spark Structured Streaming metadata ingestion.
 Keep this terminal running while Terminal 2 publishes parser events.
 Press Ctrl+C to stop Spark.
-Log file: outputs/demo_logs/terminal_1_spark_20260704_142309.log
+Log file: outputs/demo_logs/terminal_1_spark_20260705_110038.log
 
 Keep Spark running through modified-file replay so MongoDB upsert can be verified.
 Stop it with Ctrl+C only after Terminal 2 has captured its final checks.
-26/07/04 14:23:09 WARN Utils: Your hostname, macht-Inspiron-15-3520 resolves to a loopback address: 127.0.1.1; using 192.168.100.45 instead (on interface wlp0s20f3)
-26/07/04 14:23:09 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+26/07/05 11:00:39 WARN Utils: Your hostname, macht-Inspiron-15-3520 resolves to a loopback address: 127.0.1.1; using 192.168.100.45 instead (on interface wlp0s20f3)
+26/07/05 11:00:39 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
 :: loading settings :: url = jar:file:/home/macht/Dev/HCMUS/Streaming/.venv/lib/python3.12/site-packages/pyspark/jars/ivy-2.5.1.jar!/org/apache/ivy/core/settings/ivysettings.xml
 Ivy Default Cache set to: /home/macht/.ivy2/cache
 The jars for the packages stored in: /home/macht/.ivy2/jars
 org.apache.spark#spark-sql-kafka-0-10_2.12 added as a dependency
-:: resolving dependencies :: org.apache.spark#spark-submit-parent-cc55be4d-2062-49a7-b27a-6a45eb1ee661;1.0
+org.mongodb.spark#mongo-spark-connector_2.12 added as a dependency
+:: resolving dependencies :: org.apache.spark#spark-submit-parent-469d075a-acc9-47a9-bd85-31335995a93f;1.0
 	confs: [default]
 	found org.apache.spark#spark-sql-kafka-0-10_2.12;3.5.1 in central
 	found org.apache.spark#spark-token-provider-kafka-0-10_2.12;3.5.1 in central
@@ -24,7 +25,13 @@ org.apache.spark#spark-sql-kafka-0-10_2.12 added as a dependency
 	found commons-logging#commons-logging;1.1.3 in central
 	found com.google.code.findbugs#jsr305;3.0.0 in central
 	found org.apache.commons#commons-pool2;2.11.1 in central
-:: resolution report :: resolve 314ms :: artifacts dl 7ms
+	found org.mongodb.spark#mongo-spark-connector_2.12;10.3.0 in central
+	found org.mongodb#mongodb-driver-sync;4.8.2 in central
+	[4.8.2] org.mongodb#mongodb-driver-sync;[4.8.1,4.8.99)
+	found org.mongodb#bson;4.8.2 in central
+	found org.mongodb#mongodb-driver-core;4.8.2 in central
+	found org.mongodb#bson-record-codec;4.8.2 in central
+:: resolution report :: resolve 1467ms :: artifacts dl 13ms
 	:: modules in use:
 	com.google.code.findbugs#jsr305;3.0.0 from central in [default]
 	commons-logging#commons-logging;1.1.3 from central in [default]
@@ -35,158 +42,244 @@ org.apache.spark#spark-sql-kafka-0-10_2.12 added as a dependency
 	org.apache.spark#spark-sql-kafka-0-10_2.12;3.5.1 from central in [default]
 	org.apache.spark#spark-token-provider-kafka-0-10_2.12;3.5.1 from central in [default]
 	org.lz4#lz4-java;1.8.0 from central in [default]
+	org.mongodb#bson;4.8.2 from central in [default]
+	org.mongodb#bson-record-codec;4.8.2 from central in [default]
+	org.mongodb#mongodb-driver-core;4.8.2 from central in [default]
+	org.mongodb#mongodb-driver-sync;4.8.2 from central in [default]
+	org.mongodb.spark#mongo-spark-connector_2.12;10.3.0 from central in [default]
 	org.slf4j#slf4j-api;2.0.7 from central in [default]
 	org.xerial.snappy#snappy-java;1.1.10.3 from central in [default]
 	---------------------------------------------------------------------
 	|                  |            modules            ||   artifacts   |
 	|       conf       | number| search|dwnlded|evicted|| number|dwnlded|
 	---------------------------------------------------------------------
-	|      default     |   11  |   0   |   0   |   0   ||   11  |   0   |
+	|      default     |   16  |   1   |   0   |   0   ||   16  |   0   |
 	---------------------------------------------------------------------
-:: retrieving :: org.apache.spark#spark-submit-parent-cc55be4d-2062-49a7-b27a-6a45eb1ee661
+:: retrieving :: org.apache.spark#spark-submit-parent-469d075a-acc9-47a9-bd85-31335995a93f
 	confs: [default]
-	0 artifacts copied, 11 already retrieved (0kB/6ms)
-26/07/04 14:23:10 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
-26/07/04 14:23:11 INFO SparkContext: Running Spark version 3.5.1
-26/07/04 14:23:11 INFO SparkContext: OS info Linux, 7.0.0-27-generic, amd64
-26/07/04 14:23:11 INFO SparkContext: Java version 17.0.19
-26/07/04 14:23:11 INFO ResourceUtils: ==============================================================
-26/07/04 14:23:11 INFO ResourceUtils: No custom resources configured for spark.driver.
-26/07/04 14:23:11 INFO ResourceUtils: ==============================================================
-26/07/04 14:23:11 INFO SparkContext: Submitted application: CPGMetadataToMongoDB
-26/07/04 14:23:11 INFO ResourceProfile: Default ResourceProfile created, executor resources: Map(cores -> name: cores, amount: 1, script: , vendor: , memory -> name: memory, amount: 1024, script: , vendor: , offHeap -> name: offHeap, amount: 0, script: , vendor: ), task resources: Map(cpus -> name: cpus, amount: 1.0)
-26/07/04 14:23:11 INFO ResourceProfile: Limiting resource is cpu
-26/07/04 14:23:11 INFO ResourceProfileManager: Added ResourceProfile id: 0
-26/07/04 14:23:11 INFO SecurityManager: Changing view acls to: macht
-26/07/04 14:23:11 INFO SecurityManager: Changing modify acls to: macht
-26/07/04 14:23:11 INFO SecurityManager: Changing view acls groups to: 
-26/07/04 14:23:11 INFO SecurityManager: Changing modify acls groups to: 
-26/07/04 14:23:11 INFO SecurityManager: SecurityManager: authentication disabled; ui acls disabled; users with view permissions: macht; groups with view permissions: EMPTY; users with modify permissions: macht; groups with modify permissions: EMPTY
-26/07/04 14:23:11 INFO Utils: Successfully started service 'sparkDriver' on port 41213.
-26/07/04 14:23:11 INFO SparkEnv: Registering MapOutputTracker
-26/07/04 14:23:11 INFO SparkEnv: Registering BlockManagerMaster
-26/07/04 14:23:11 INFO BlockManagerMasterEndpoint: Using org.apache.spark.storage.DefaultTopologyMapper for getting topology information
-26/07/04 14:23:11 INFO BlockManagerMasterEndpoint: BlockManagerMasterEndpoint up
-26/07/04 14:23:11 INFO SparkEnv: Registering BlockManagerMasterHeartbeat
-26/07/04 14:23:11 INFO DiskBlockManager: Created local directory at /tmp/blockmgr-8750d1ab-f378-4cca-83d5-348eb1cafd98
-26/07/04 14:23:11 INFO MemoryStore: MemoryStore started with capacity 434.4 MiB
-26/07/04 14:23:11 INFO SparkEnv: Registering OutputCommitCoordinator
-26/07/04 14:23:11 INFO JettyUtils: Start Jetty 0.0.0.0:4040 for SparkUI
-26/07/04 14:23:11 INFO Utils: Successfully started service 'SparkUI' on port 4040.
-26/07/04 14:23:11 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar at spark://macht-Inspiron-15-3520.lan:41213/jars/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar at spark://macht-Inspiron-15-3520.lan:41213/jars/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/org.apache.kafka_kafka-clients-3.4.1.jar at spark://macht-Inspiron-15-3520.lan:41213/jars/org.apache.kafka_kafka-clients-3.4.1.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/com.google.code.findbugs_jsr305-3.0.0.jar at spark://macht-Inspiron-15-3520.lan:41213/jars/com.google.code.findbugs_jsr305-3.0.0.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/org.apache.commons_commons-pool2-2.11.1.jar at spark://macht-Inspiron-15-3520.lan:41213/jars/org.apache.commons_commons-pool2-2.11.1.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar at spark://macht-Inspiron-15-3520.lan:41213/jars/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/org.lz4_lz4-java-1.8.0.jar at spark://macht-Inspiron-15-3520.lan:41213/jars/org.lz4_lz4-java-1.8.0.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/org.xerial.snappy_snappy-java-1.1.10.3.jar at spark://macht-Inspiron-15-3520.lan:41213/jars/org.xerial.snappy_snappy-java-1.1.10.3.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/org.slf4j_slf4j-api-2.0.7.jar at spark://macht-Inspiron-15-3520.lan:41213/jars/org.slf4j_slf4j-api-2.0.7.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-api-3.3.4.jar at spark://macht-Inspiron-15-3520.lan:41213/jars/org.apache.hadoop_hadoop-client-api-3.3.4.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/commons-logging_commons-logging-1.1.3.jar at spark://macht-Inspiron-15-3520.lan:41213/jars/commons-logging_commons-logging-1.1.3.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar at file:///home/macht/.ivy2/jars/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO Utils: Copying /home/macht/.ivy2/jars/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar
-26/07/04 14:23:11 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar at file:///home/macht/.ivy2/jars/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO Utils: Copying /home/macht/.ivy2/jars/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar
-26/07/04 14:23:11 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/org.apache.kafka_kafka-clients-3.4.1.jar at file:///home/macht/.ivy2/jars/org.apache.kafka_kafka-clients-3.4.1.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO Utils: Copying /home/macht/.ivy2/jars/org.apache.kafka_kafka-clients-3.4.1.jar to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.kafka_kafka-clients-3.4.1.jar
-26/07/04 14:23:11 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/com.google.code.findbugs_jsr305-3.0.0.jar at file:///home/macht/.ivy2/jars/com.google.code.findbugs_jsr305-3.0.0.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO Utils: Copying /home/macht/.ivy2/jars/com.google.code.findbugs_jsr305-3.0.0.jar to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/com.google.code.findbugs_jsr305-3.0.0.jar
-26/07/04 14:23:11 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/org.apache.commons_commons-pool2-2.11.1.jar at file:///home/macht/.ivy2/jars/org.apache.commons_commons-pool2-2.11.1.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO Utils: Copying /home/macht/.ivy2/jars/org.apache.commons_commons-pool2-2.11.1.jar to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.commons_commons-pool2-2.11.1.jar
-26/07/04 14:23:11 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar at file:///home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO Utils: Copying /home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar
-26/07/04 14:23:11 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/org.lz4_lz4-java-1.8.0.jar at file:///home/macht/.ivy2/jars/org.lz4_lz4-java-1.8.0.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO Utils: Copying /home/macht/.ivy2/jars/org.lz4_lz4-java-1.8.0.jar to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.lz4_lz4-java-1.8.0.jar
-26/07/04 14:23:11 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/org.xerial.snappy_snappy-java-1.1.10.3.jar at file:///home/macht/.ivy2/jars/org.xerial.snappy_snappy-java-1.1.10.3.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO Utils: Copying /home/macht/.ivy2/jars/org.xerial.snappy_snappy-java-1.1.10.3.jar to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.xerial.snappy_snappy-java-1.1.10.3.jar
-26/07/04 14:23:11 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/org.slf4j_slf4j-api-2.0.7.jar at file:///home/macht/.ivy2/jars/org.slf4j_slf4j-api-2.0.7.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO Utils: Copying /home/macht/.ivy2/jars/org.slf4j_slf4j-api-2.0.7.jar to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.slf4j_slf4j-api-2.0.7.jar
-26/07/04 14:23:11 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-api-3.3.4.jar at file:///home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-api-3.3.4.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO Utils: Copying /home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-api-3.3.4.jar to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.hadoop_hadoop-client-api-3.3.4.jar
-26/07/04 14:23:11 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/commons-logging_commons-logging-1.1.3.jar at file:///home/macht/.ivy2/jars/commons-logging_commons-logging-1.1.3.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO Utils: Copying /home/macht/.ivy2/jars/commons-logging_commons-logging-1.1.3.jar to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/commons-logging_commons-logging-1.1.3.jar
-26/07/04 14:23:11 INFO Executor: Starting executor ID driver on host macht-Inspiron-15-3520.lan
-26/07/04 14:23:11 INFO Executor: OS info Linux, 7.0.0-27-generic, amd64
-26/07/04 14:23:11 INFO Executor: Java version 17.0.19
-26/07/04 14:23:11 INFO Executor: Starting executor with user classpath (userClassPathFirst = false): ''
-26/07/04 14:23:11 INFO Executor: Created or updated repl class loader org.apache.spark.util.MutableURLClassLoader@252a142e for default.
-26/07/04 14:23:11 INFO Executor: Fetching file:///home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-api-3.3.4.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO Utils: /home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-api-3.3.4.jar has been previously copied to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.hadoop_hadoop-client-api-3.3.4.jar
-26/07/04 14:23:11 INFO Executor: Fetching file:///home/macht/.ivy2/jars/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO Utils: /home/macht/.ivy2/jars/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar has been previously copied to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar
-26/07/04 14:23:11 INFO Executor: Fetching file:///home/macht/.ivy2/jars/org.xerial.snappy_snappy-java-1.1.10.3.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO Utils: /home/macht/.ivy2/jars/org.xerial.snappy_snappy-java-1.1.10.3.jar has been previously copied to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.xerial.snappy_snappy-java-1.1.10.3.jar
-26/07/04 14:23:11 INFO Executor: Fetching file:///home/macht/.ivy2/jars/org.apache.commons_commons-pool2-2.11.1.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO Utils: /home/macht/.ivy2/jars/org.apache.commons_commons-pool2-2.11.1.jar has been previously copied to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.commons_commons-pool2-2.11.1.jar
-26/07/04 14:23:11 INFO Executor: Fetching file:///home/macht/.ivy2/jars/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO Utils: /home/macht/.ivy2/jars/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar has been previously copied to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar
-26/07/04 14:23:11 INFO Executor: Fetching file:///home/macht/.ivy2/jars/org.apache.kafka_kafka-clients-3.4.1.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO Utils: /home/macht/.ivy2/jars/org.apache.kafka_kafka-clients-3.4.1.jar has been previously copied to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.kafka_kafka-clients-3.4.1.jar
-26/07/04 14:23:11 INFO Executor: Fetching file:///home/macht/.ivy2/jars/commons-logging_commons-logging-1.1.3.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO Utils: /home/macht/.ivy2/jars/commons-logging_commons-logging-1.1.3.jar has been previously copied to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/commons-logging_commons-logging-1.1.3.jar
-26/07/04 14:23:11 INFO Executor: Fetching file:///home/macht/.ivy2/jars/org.lz4_lz4-java-1.8.0.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO Utils: /home/macht/.ivy2/jars/org.lz4_lz4-java-1.8.0.jar has been previously copied to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.lz4_lz4-java-1.8.0.jar
-26/07/04 14:23:11 INFO Executor: Fetching file:///home/macht/.ivy2/jars/com.google.code.findbugs_jsr305-3.0.0.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO Utils: /home/macht/.ivy2/jars/com.google.code.findbugs_jsr305-3.0.0.jar has been previously copied to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/com.google.code.findbugs_jsr305-3.0.0.jar
-26/07/04 14:23:11 INFO Executor: Fetching file:///home/macht/.ivy2/jars/org.slf4j_slf4j-api-2.0.7.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO Utils: /home/macht/.ivy2/jars/org.slf4j_slf4j-api-2.0.7.jar has been previously copied to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.slf4j_slf4j-api-2.0.7.jar
-26/07/04 14:23:11 INFO Executor: Fetching file:///home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO Utils: /home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar has been previously copied to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar
-26/07/04 14:23:11 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:41213/jars/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar with timestamp 1783149791147
-26/07/04 14:23:11 INFO TransportClientFactory: Successfully created connection to macht-Inspiron-15-3520.lan/192.168.100.45:41213 after 18 ms (0 ms spent in bootstraps)
-26/07/04 14:23:11 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:41213/jars/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/fetchFileTemp10796139933187618448.tmp
-26/07/04 14:23:12 INFO Utils: /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/fetchFileTemp10796139933187618448.tmp has been previously copied to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar
-26/07/04 14:23:12 INFO Executor: Adding file:/tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar to class loader default
-26/07/04 14:23:12 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:41213/jars/com.google.code.findbugs_jsr305-3.0.0.jar with timestamp 1783149791147
-26/07/04 14:23:12 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:41213/jars/com.google.code.findbugs_jsr305-3.0.0.jar to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/fetchFileTemp16551503749616568029.tmp
-26/07/04 14:23:12 INFO Utils: /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/fetchFileTemp16551503749616568029.tmp has been previously copied to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/com.google.code.findbugs_jsr305-3.0.0.jar
-26/07/04 14:23:12 INFO Executor: Adding file:/tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/com.google.code.findbugs_jsr305-3.0.0.jar to class loader default
-26/07/04 14:23:12 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:41213/jars/org.apache.commons_commons-pool2-2.11.1.jar with timestamp 1783149791147
-26/07/04 14:23:12 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:41213/jars/org.apache.commons_commons-pool2-2.11.1.jar to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/fetchFileTemp17473495604765050766.tmp
-26/07/04 14:23:12 INFO Utils: /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/fetchFileTemp17473495604765050766.tmp has been previously copied to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.commons_commons-pool2-2.11.1.jar
-26/07/04 14:23:12 INFO Executor: Adding file:/tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.commons_commons-pool2-2.11.1.jar to class loader default
-26/07/04 14:23:12 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:41213/jars/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar with timestamp 1783149791147
-26/07/04 14:23:12 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:41213/jars/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/fetchFileTemp9767907457795180444.tmp
-26/07/04 14:23:12 INFO Utils: /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/fetchFileTemp9767907457795180444.tmp has been previously copied to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar
-26/07/04 14:23:12 INFO Executor: Adding file:/tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar to class loader default
-26/07/04 14:23:12 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:41213/jars/commons-logging_commons-logging-1.1.3.jar with timestamp 1783149791147
-26/07/04 14:23:12 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:41213/jars/commons-logging_commons-logging-1.1.3.jar to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/fetchFileTemp14720021069372340319.tmp
-26/07/04 14:23:12 INFO Utils: /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/fetchFileTemp14720021069372340319.tmp has been previously copied to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/commons-logging_commons-logging-1.1.3.jar
-26/07/04 14:23:12 INFO Executor: Adding file:/tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/commons-logging_commons-logging-1.1.3.jar to class loader default
-26/07/04 14:23:12 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:41213/jars/org.slf4j_slf4j-api-2.0.7.jar with timestamp 1783149791147
-26/07/04 14:23:12 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:41213/jars/org.slf4j_slf4j-api-2.0.7.jar to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/fetchFileTemp9262391173978772262.tmp
-26/07/04 14:23:12 INFO Utils: /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/fetchFileTemp9262391173978772262.tmp has been previously copied to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.slf4j_slf4j-api-2.0.7.jar
-26/07/04 14:23:12 INFO Executor: Adding file:/tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.slf4j_slf4j-api-2.0.7.jar to class loader default
-26/07/04 14:23:12 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:41213/jars/org.lz4_lz4-java-1.8.0.jar with timestamp 1783149791147
-26/07/04 14:23:12 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:41213/jars/org.lz4_lz4-java-1.8.0.jar to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/fetchFileTemp4320657371862833530.tmp
-26/07/04 14:23:12 INFO Utils: /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/fetchFileTemp4320657371862833530.tmp has been previously copied to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.lz4_lz4-java-1.8.0.jar
-26/07/04 14:23:12 INFO Executor: Adding file:/tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.lz4_lz4-java-1.8.0.jar to class loader default
-26/07/04 14:23:12 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:41213/jars/org.apache.kafka_kafka-clients-3.4.1.jar with timestamp 1783149791147
-26/07/04 14:23:12 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:41213/jars/org.apache.kafka_kafka-clients-3.4.1.jar to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/fetchFileTemp14617359829054919612.tmp
-26/07/04 14:23:12 INFO Utils: /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/fetchFileTemp14617359829054919612.tmp has been previously copied to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.kafka_kafka-clients-3.4.1.jar
-26/07/04 14:23:12 INFO Executor: Adding file:/tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.kafka_kafka-clients-3.4.1.jar to class loader default
-26/07/04 14:23:12 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:41213/jars/org.apache.hadoop_hadoop-client-api-3.3.4.jar with timestamp 1783149791147
-26/07/04 14:23:12 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:41213/jars/org.apache.hadoop_hadoop-client-api-3.3.4.jar to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/fetchFileTemp6086658216558457927.tmp
-26/07/04 14:23:12 INFO Utils: /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/fetchFileTemp6086658216558457927.tmp has been previously copied to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.hadoop_hadoop-client-api-3.3.4.jar
-26/07/04 14:23:12 INFO Executor: Adding file:/tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.hadoop_hadoop-client-api-3.3.4.jar to class loader default
-26/07/04 14:23:12 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:41213/jars/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar with timestamp 1783149791147
-26/07/04 14:23:12 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:41213/jars/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/fetchFileTemp2772213830115977590.tmp
-26/07/04 14:23:12 INFO Utils: /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/fetchFileTemp2772213830115977590.tmp has been previously copied to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar
-26/07/04 14:23:12 INFO Executor: Adding file:/tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar to class loader default
-26/07/04 14:23:12 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:41213/jars/org.xerial.snappy_snappy-java-1.1.10.3.jar with timestamp 1783149791147
-26/07/04 14:23:12 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:41213/jars/org.xerial.snappy_snappy-java-1.1.10.3.jar to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/fetchFileTemp13016378388332496336.tmp
-26/07/04 14:23:12 INFO Utils: /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/fetchFileTemp13016378388332496336.tmp has been previously copied to /tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.xerial.snappy_snappy-java-1.1.10.3.jar
-26/07/04 14:23:12 INFO Executor: Adding file:/tmp/spark-6227f55c-f990-4bd8-89b4-8cf4e9bacedc/userFiles-a1c0010d-aaaa-455f-9c43-c3d44b531ab0/org.xerial.snappy_snappy-java-1.1.10.3.jar to class loader default
-26/07/04 14:23:12 INFO Utils: Successfully started service 'org.apache.spark.network.netty.NettyBlockTransferService' on port 46143.
-26/07/04 14:23:12 INFO NettyBlockTransferService: Server created on macht-Inspiron-15-3520.lan:46143
-26/07/04 14:23:12 INFO BlockManager: Using org.apache.spark.storage.RandomBlockReplicationPolicy for block replication policy
-26/07/04 14:23:12 INFO BlockManagerMaster: Registering BlockManager BlockManagerId(driver, macht-Inspiron-15-3520.lan, 46143, None)
-26/07/04 14:23:12 INFO BlockManagerMasterEndpoint: Registering block manager macht-Inspiron-15-3520.lan:46143 with 434.4 MiB RAM, BlockManagerId(driver, macht-Inspiron-15-3520.lan, 46143, None)
-26/07/04 14:23:12 INFO BlockManagerMaster: Registered BlockManager BlockManagerId(driver, macht-Inspiron-15-3520.lan, 46143, None)
-26/07/04 14:23:12 INFO BlockManager: Initialized BlockManager: BlockManagerId(driver, macht-Inspiron-15-3520.lan, 46143, None)
-26/07/04 14:23:13 WARN ResolveWriteToStream: spark.sql.adaptive.enabled is not supported in streaming DataFrames/Datasets and will be disabled.
-26/07/04 14:23:13 WARN AdminClientConfig: These configurations '[key.deserializer, value.deserializer, enable.auto.commit, max.poll.records, auto.offset.reset]' were supplied but are not used yet.
+	0 artifacts copied, 16 already retrieved (0kB/9ms)
+26/07/05 11:00:41 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+26/07/05 11:00:41 INFO SparkContext: Running Spark version 3.5.1
+26/07/05 11:00:41 INFO SparkContext: OS info Linux, 7.0.0-27-generic, amd64
+26/07/05 11:00:41 INFO SparkContext: Java version 17.0.19
+26/07/05 11:00:41 INFO ResourceUtils: ==============================================================
+26/07/05 11:00:41 INFO ResourceUtils: No custom resources configured for spark.driver.
+26/07/05 11:00:41 INFO ResourceUtils: ==============================================================
+26/07/05 11:00:41 INFO SparkContext: Submitted application: CPGMetadataToMongoDB
+26/07/05 11:00:41 INFO ResourceProfile: Default ResourceProfile created, executor resources: Map(cores -> name: cores, amount: 1, script: , vendor: , memory -> name: memory, amount: 1024, script: , vendor: , offHeap -> name: offHeap, amount: 0, script: , vendor: ), task resources: Map(cpus -> name: cpus, amount: 1.0)
+26/07/05 11:00:41 INFO ResourceProfile: Limiting resource is cpu
+26/07/05 11:00:41 INFO ResourceProfileManager: Added ResourceProfile id: 0
+26/07/05 11:00:42 INFO SecurityManager: Changing view acls to: macht
+26/07/05 11:00:42 INFO SecurityManager: Changing modify acls to: macht
+26/07/05 11:00:42 INFO SecurityManager: Changing view acls groups to: 
+26/07/05 11:00:42 INFO SecurityManager: Changing modify acls groups to: 
+26/07/05 11:00:42 INFO SecurityManager: SecurityManager: authentication disabled; ui acls disabled; users with view permissions: macht; groups with view permissions: EMPTY; users with modify permissions: macht; groups with modify permissions: EMPTY
+26/07/05 11:00:42 INFO Utils: Successfully started service 'sparkDriver' on port 36369.
+26/07/05 11:00:42 INFO SparkEnv: Registering MapOutputTracker
+26/07/05 11:00:42 INFO SparkEnv: Registering BlockManagerMaster
+26/07/05 11:00:42 INFO BlockManagerMasterEndpoint: Using org.apache.spark.storage.DefaultTopologyMapper for getting topology information
+26/07/05 11:00:42 INFO BlockManagerMasterEndpoint: BlockManagerMasterEndpoint up
+26/07/05 11:00:42 INFO SparkEnv: Registering BlockManagerMasterHeartbeat
+26/07/05 11:00:42 INFO DiskBlockManager: Created local directory at /tmp/blockmgr-897b13a0-6747-4b53-b694-0830240cb52a
+26/07/05 11:00:42 INFO MemoryStore: MemoryStore started with capacity 434.4 MiB
+26/07/05 11:00:42 INFO SparkEnv: Registering OutputCommitCoordinator
+26/07/05 11:00:42 INFO JettyUtils: Start Jetty 0.0.0.0:4040 for SparkUI
+26/07/05 11:00:42 INFO Utils: Successfully started service 'SparkUI' on port 4040.
+26/07/05 11:00:42 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar at spark://macht-Inspiron-15-3520.lan:36369/jars/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/org.mongodb.spark_mongo-spark-connector_2.12-10.3.0.jar at spark://macht-Inspiron-15-3520.lan:36369/jars/org.mongodb.spark_mongo-spark-connector_2.12-10.3.0.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar at spark://macht-Inspiron-15-3520.lan:36369/jars/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/org.apache.kafka_kafka-clients-3.4.1.jar at spark://macht-Inspiron-15-3520.lan:36369/jars/org.apache.kafka_kafka-clients-3.4.1.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/com.google.code.findbugs_jsr305-3.0.0.jar at spark://macht-Inspiron-15-3520.lan:36369/jars/com.google.code.findbugs_jsr305-3.0.0.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/org.apache.commons_commons-pool2-2.11.1.jar at spark://macht-Inspiron-15-3520.lan:36369/jars/org.apache.commons_commons-pool2-2.11.1.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar at spark://macht-Inspiron-15-3520.lan:36369/jars/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/org.lz4_lz4-java-1.8.0.jar at spark://macht-Inspiron-15-3520.lan:36369/jars/org.lz4_lz4-java-1.8.0.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/org.xerial.snappy_snappy-java-1.1.10.3.jar at spark://macht-Inspiron-15-3520.lan:36369/jars/org.xerial.snappy_snappy-java-1.1.10.3.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/org.slf4j_slf4j-api-2.0.7.jar at spark://macht-Inspiron-15-3520.lan:36369/jars/org.slf4j_slf4j-api-2.0.7.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-api-3.3.4.jar at spark://macht-Inspiron-15-3520.lan:36369/jars/org.apache.hadoop_hadoop-client-api-3.3.4.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/commons-logging_commons-logging-1.1.3.jar at spark://macht-Inspiron-15-3520.lan:36369/jars/commons-logging_commons-logging-1.1.3.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/org.mongodb_mongodb-driver-sync-4.8.2.jar at spark://macht-Inspiron-15-3520.lan:36369/jars/org.mongodb_mongodb-driver-sync-4.8.2.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/org.mongodb_bson-4.8.2.jar at spark://macht-Inspiron-15-3520.lan:36369/jars/org.mongodb_bson-4.8.2.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/org.mongodb_mongodb-driver-core-4.8.2.jar at spark://macht-Inspiron-15-3520.lan:36369/jars/org.mongodb_mongodb-driver-core-4.8.2.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO SparkContext: Added JAR file:///home/macht/.ivy2/jars/org.mongodb_bson-record-codec-4.8.2.jar at spark://macht-Inspiron-15-3520.lan:36369/jars/org.mongodb_bson-record-codec-4.8.2.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar at file:///home/macht/.ivy2/jars/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: Copying /home/macht/.ivy2/jars/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar
+26/07/05 11:00:42 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/org.mongodb.spark_mongo-spark-connector_2.12-10.3.0.jar at file:///home/macht/.ivy2/jars/org.mongodb.spark_mongo-spark-connector_2.12-10.3.0.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: Copying /home/macht/.ivy2/jars/org.mongodb.spark_mongo-spark-connector_2.12-10.3.0.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.mongodb.spark_mongo-spark-connector_2.12-10.3.0.jar
+26/07/05 11:00:42 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar at file:///home/macht/.ivy2/jars/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: Copying /home/macht/.ivy2/jars/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar
+26/07/05 11:00:42 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/org.apache.kafka_kafka-clients-3.4.1.jar at file:///home/macht/.ivy2/jars/org.apache.kafka_kafka-clients-3.4.1.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: Copying /home/macht/.ivy2/jars/org.apache.kafka_kafka-clients-3.4.1.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.kafka_kafka-clients-3.4.1.jar
+26/07/05 11:00:42 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/com.google.code.findbugs_jsr305-3.0.0.jar at file:///home/macht/.ivy2/jars/com.google.code.findbugs_jsr305-3.0.0.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: Copying /home/macht/.ivy2/jars/com.google.code.findbugs_jsr305-3.0.0.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/com.google.code.findbugs_jsr305-3.0.0.jar
+26/07/05 11:00:42 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/org.apache.commons_commons-pool2-2.11.1.jar at file:///home/macht/.ivy2/jars/org.apache.commons_commons-pool2-2.11.1.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: Copying /home/macht/.ivy2/jars/org.apache.commons_commons-pool2-2.11.1.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.commons_commons-pool2-2.11.1.jar
+26/07/05 11:00:42 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar at file:///home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: Copying /home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar
+26/07/05 11:00:42 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/org.lz4_lz4-java-1.8.0.jar at file:///home/macht/.ivy2/jars/org.lz4_lz4-java-1.8.0.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: Copying /home/macht/.ivy2/jars/org.lz4_lz4-java-1.8.0.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.lz4_lz4-java-1.8.0.jar
+26/07/05 11:00:42 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/org.xerial.snappy_snappy-java-1.1.10.3.jar at file:///home/macht/.ivy2/jars/org.xerial.snappy_snappy-java-1.1.10.3.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: Copying /home/macht/.ivy2/jars/org.xerial.snappy_snappy-java-1.1.10.3.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.xerial.snappy_snappy-java-1.1.10.3.jar
+26/07/05 11:00:42 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/org.slf4j_slf4j-api-2.0.7.jar at file:///home/macht/.ivy2/jars/org.slf4j_slf4j-api-2.0.7.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: Copying /home/macht/.ivy2/jars/org.slf4j_slf4j-api-2.0.7.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.slf4j_slf4j-api-2.0.7.jar
+26/07/05 11:00:42 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-api-3.3.4.jar at file:///home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-api-3.3.4.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: Copying /home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-api-3.3.4.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.hadoop_hadoop-client-api-3.3.4.jar
+26/07/05 11:00:42 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/commons-logging_commons-logging-1.1.3.jar at file:///home/macht/.ivy2/jars/commons-logging_commons-logging-1.1.3.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: Copying /home/macht/.ivy2/jars/commons-logging_commons-logging-1.1.3.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/commons-logging_commons-logging-1.1.3.jar
+26/07/05 11:00:42 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/org.mongodb_mongodb-driver-sync-4.8.2.jar at file:///home/macht/.ivy2/jars/org.mongodb_mongodb-driver-sync-4.8.2.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: Copying /home/macht/.ivy2/jars/org.mongodb_mongodb-driver-sync-4.8.2.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.mongodb_mongodb-driver-sync-4.8.2.jar
+26/07/05 11:00:42 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/org.mongodb_bson-4.8.2.jar at file:///home/macht/.ivy2/jars/org.mongodb_bson-4.8.2.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: Copying /home/macht/.ivy2/jars/org.mongodb_bson-4.8.2.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.mongodb_bson-4.8.2.jar
+26/07/05 11:00:42 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/org.mongodb_mongodb-driver-core-4.8.2.jar at file:///home/macht/.ivy2/jars/org.mongodb_mongodb-driver-core-4.8.2.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: Copying /home/macht/.ivy2/jars/org.mongodb_mongodb-driver-core-4.8.2.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.mongodb_mongodb-driver-core-4.8.2.jar
+26/07/05 11:00:42 INFO SparkContext: Added file file:///home/macht/.ivy2/jars/org.mongodb_bson-record-codec-4.8.2.jar at file:///home/macht/.ivy2/jars/org.mongodb_bson-record-codec-4.8.2.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: Copying /home/macht/.ivy2/jars/org.mongodb_bson-record-codec-4.8.2.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.mongodb_bson-record-codec-4.8.2.jar
+26/07/05 11:00:42 INFO Executor: Starting executor ID driver on host macht-Inspiron-15-3520.lan
+26/07/05 11:00:42 INFO Executor: OS info Linux, 7.0.0-27-generic, amd64
+26/07/05 11:00:42 INFO Executor: Java version 17.0.19
+26/07/05 11:00:42 INFO Executor: Starting executor with user classpath (userClassPathFirst = false): ''
+26/07/05 11:00:42 INFO Executor: Created or updated repl class loader org.apache.spark.util.MutableURLClassLoader@78687ac8 for default.
+26/07/05 11:00:42 INFO Executor: Fetching file:///home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-api-3.3.4.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: /home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-api-3.3.4.jar has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.hadoop_hadoop-client-api-3.3.4.jar
+26/07/05 11:00:42 INFO Executor: Fetching file:///home/macht/.ivy2/jars/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: /home/macht/.ivy2/jars/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar
+26/07/05 11:00:42 INFO Executor: Fetching file:///home/macht/.ivy2/jars/org.mongodb_mongodb-driver-sync-4.8.2.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: /home/macht/.ivy2/jars/org.mongodb_mongodb-driver-sync-4.8.2.jar has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.mongodb_mongodb-driver-sync-4.8.2.jar
+26/07/05 11:00:42 INFO Executor: Fetching file:///home/macht/.ivy2/jars/org.xerial.snappy_snappy-java-1.1.10.3.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: /home/macht/.ivy2/jars/org.xerial.snappy_snappy-java-1.1.10.3.jar has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.xerial.snappy_snappy-java-1.1.10.3.jar
+26/07/05 11:00:42 INFO Executor: Fetching file:///home/macht/.ivy2/jars/org.apache.commons_commons-pool2-2.11.1.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: /home/macht/.ivy2/jars/org.apache.commons_commons-pool2-2.11.1.jar has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.commons_commons-pool2-2.11.1.jar
+26/07/05 11:00:42 INFO Executor: Fetching file:///home/macht/.ivy2/jars/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: /home/macht/.ivy2/jars/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar
+26/07/05 11:00:42 INFO Executor: Fetching file:///home/macht/.ivy2/jars/org.apache.kafka_kafka-clients-3.4.1.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: /home/macht/.ivy2/jars/org.apache.kafka_kafka-clients-3.4.1.jar has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.kafka_kafka-clients-3.4.1.jar
+26/07/05 11:00:42 INFO Executor: Fetching file:///home/macht/.ivy2/jars/commons-logging_commons-logging-1.1.3.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: /home/macht/.ivy2/jars/commons-logging_commons-logging-1.1.3.jar has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/commons-logging_commons-logging-1.1.3.jar
+26/07/05 11:00:42 INFO Executor: Fetching file:///home/macht/.ivy2/jars/org.lz4_lz4-java-1.8.0.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: /home/macht/.ivy2/jars/org.lz4_lz4-java-1.8.0.jar has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.lz4_lz4-java-1.8.0.jar
+26/07/05 11:00:42 INFO Executor: Fetching file:///home/macht/.ivy2/jars/org.mongodb_bson-4.8.2.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: /home/macht/.ivy2/jars/org.mongodb_bson-4.8.2.jar has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.mongodb_bson-4.8.2.jar
+26/07/05 11:00:42 INFO Executor: Fetching file:///home/macht/.ivy2/jars/com.google.code.findbugs_jsr305-3.0.0.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: /home/macht/.ivy2/jars/com.google.code.findbugs_jsr305-3.0.0.jar has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/com.google.code.findbugs_jsr305-3.0.0.jar
+26/07/05 11:00:42 INFO Executor: Fetching file:///home/macht/.ivy2/jars/org.mongodb_bson-record-codec-4.8.2.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: /home/macht/.ivy2/jars/org.mongodb_bson-record-codec-4.8.2.jar has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.mongodb_bson-record-codec-4.8.2.jar
+26/07/05 11:00:42 INFO Executor: Fetching file:///home/macht/.ivy2/jars/org.slf4j_slf4j-api-2.0.7.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: /home/macht/.ivy2/jars/org.slf4j_slf4j-api-2.0.7.jar has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.slf4j_slf4j-api-2.0.7.jar
+26/07/05 11:00:42 INFO Executor: Fetching file:///home/macht/.ivy2/jars/org.mongodb_mongodb-driver-core-4.8.2.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: /home/macht/.ivy2/jars/org.mongodb_mongodb-driver-core-4.8.2.jar has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.mongodb_mongodb-driver-core-4.8.2.jar
+26/07/05 11:00:42 INFO Executor: Fetching file:///home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: /home/macht/.ivy2/jars/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar
+26/07/05 11:00:42 INFO Executor: Fetching file:///home/macht/.ivy2/jars/org.mongodb.spark_mongo-spark-connector_2.12-10.3.0.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: /home/macht/.ivy2/jars/org.mongodb.spark_mongo-spark-connector_2.12-10.3.0.jar has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.mongodb.spark_mongo-spark-connector_2.12-10.3.0.jar
+26/07/05 11:00:42 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.apache.kafka_kafka-clients-3.4.1.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO TransportClientFactory: Successfully created connection to macht-Inspiron-15-3520.lan/192.168.100.45:36369 after 19 ms (0 ms spent in bootstraps)
+26/07/05 11:00:42 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.apache.kafka_kafka-clients-3.4.1.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp2854731565886612892.tmp
+26/07/05 11:00:42 INFO Utils: /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp2854731565886612892.tmp has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.kafka_kafka-clients-3.4.1.jar
+26/07/05 11:00:42 INFO Executor: Adding file:/tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.kafka_kafka-clients-3.4.1.jar to class loader default
+26/07/05 11:00:42 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.apache.commons_commons-pool2-2.11.1.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.apache.commons_commons-pool2-2.11.1.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp3296271177452158750.tmp
+26/07/05 11:00:42 INFO Utils: /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp3296271177452158750.tmp has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.commons_commons-pool2-2.11.1.jar
+26/07/05 11:00:42 INFO Executor: Adding file:/tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.commons_commons-pool2-2.11.1.jar to class loader default
+26/07/05 11:00:42 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.apache.hadoop_hadoop-client-api-3.3.4.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.apache.hadoop_hadoop-client-api-3.3.4.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp14286102816823049301.tmp
+26/07/05 11:00:42 INFO Utils: /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp14286102816823049301.tmp has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.hadoop_hadoop-client-api-3.3.4.jar
+26/07/05 11:00:42 INFO Executor: Adding file:/tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.hadoop_hadoop-client-api-3.3.4.jar to class loader default
+26/07/05 11:00:42 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/commons-logging_commons-logging-1.1.3.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/commons-logging_commons-logging-1.1.3.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp5669545526185392354.tmp
+26/07/05 11:00:42 INFO Utils: /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp5669545526185392354.tmp has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/commons-logging_commons-logging-1.1.3.jar
+26/07/05 11:00:42 INFO Executor: Adding file:/tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/commons-logging_commons-logging-1.1.3.jar to class loader default
+26/07/05 11:00:42 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.slf4j_slf4j-api-2.0.7.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.slf4j_slf4j-api-2.0.7.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp16932805885761838365.tmp
+26/07/05 11:00:42 INFO Utils: /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp16932805885761838365.tmp has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.slf4j_slf4j-api-2.0.7.jar
+26/07/05 11:00:42 INFO Executor: Adding file:/tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.slf4j_slf4j-api-2.0.7.jar to class loader default
+26/07/05 11:00:42 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.mongodb_bson-record-codec-4.8.2.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.mongodb_bson-record-codec-4.8.2.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp12717260766972077844.tmp
+26/07/05 11:00:42 INFO Utils: /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp12717260766972077844.tmp has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.mongodb_bson-record-codec-4.8.2.jar
+26/07/05 11:00:42 INFO Executor: Adding file:/tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.mongodb_bson-record-codec-4.8.2.jar to class loader default
+26/07/05 11:00:42 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar with timestamp 1783224041947
+26/07/05 11:00:42 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp17139527283353366180.tmp
+26/07/05 11:00:43 INFO Utils: /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp17139527283353366180.tmp has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar
+26/07/05 11:00:43 INFO Executor: Adding file:/tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.hadoop_hadoop-client-runtime-3.3.4.jar to class loader default
+26/07/05 11:00:43 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.mongodb_mongodb-driver-sync-4.8.2.jar with timestamp 1783224041947
+26/07/05 11:00:43 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.mongodb_mongodb-driver-sync-4.8.2.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp4858812527837403999.tmp
+26/07/05 11:00:43 INFO Utils: /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp4858812527837403999.tmp has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.mongodb_mongodb-driver-sync-4.8.2.jar
+26/07/05 11:00:43 INFO Executor: Adding file:/tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.mongodb_mongodb-driver-sync-4.8.2.jar to class loader default
+26/07/05 11:00:43 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.lz4_lz4-java-1.8.0.jar with timestamp 1783224041947
+26/07/05 11:00:43 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.lz4_lz4-java-1.8.0.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp13475221998292440271.tmp
+26/07/05 11:00:43 INFO Utils: /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp13475221998292440271.tmp has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.lz4_lz4-java-1.8.0.jar
+26/07/05 11:00:43 INFO Executor: Adding file:/tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.lz4_lz4-java-1.8.0.jar to class loader default
+26/07/05 11:00:43 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.mongodb.spark_mongo-spark-connector_2.12-10.3.0.jar with timestamp 1783224041947
+26/07/05 11:00:43 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.mongodb.spark_mongo-spark-connector_2.12-10.3.0.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp5430159301441609907.tmp
+26/07/05 11:00:43 INFO Utils: /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp5430159301441609907.tmp has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.mongodb.spark_mongo-spark-connector_2.12-10.3.0.jar
+26/07/05 11:00:43 INFO Executor: Adding file:/tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.mongodb.spark_mongo-spark-connector_2.12-10.3.0.jar to class loader default
+26/07/05 11:00:43 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar with timestamp 1783224041947
+26/07/05 11:00:43 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp9461395445810777358.tmp
+26/07/05 11:00:43 INFO Utils: /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp9461395445810777358.tmp has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar
+26/07/05 11:00:43 INFO Executor: Adding file:/tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.spark_spark-sql-kafka-0-10_2.12-3.5.1.jar to class loader default
+26/07/05 11:00:43 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.mongodb_bson-4.8.2.jar with timestamp 1783224041947
+26/07/05 11:00:43 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.mongodb_bson-4.8.2.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp13369967791708609866.tmp
+26/07/05 11:00:43 INFO Utils: /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp13369967791708609866.tmp has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.mongodb_bson-4.8.2.jar
+26/07/05 11:00:43 INFO Executor: Adding file:/tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.mongodb_bson-4.8.2.jar to class loader default
+26/07/05 11:00:43 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/com.google.code.findbugs_jsr305-3.0.0.jar with timestamp 1783224041947
+26/07/05 11:00:43 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/com.google.code.findbugs_jsr305-3.0.0.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp16254403592394828275.tmp
+26/07/05 11:00:43 INFO Utils: /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp16254403592394828275.tmp has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/com.google.code.findbugs_jsr305-3.0.0.jar
+26/07/05 11:00:43 INFO Executor: Adding file:/tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/com.google.code.findbugs_jsr305-3.0.0.jar to class loader default
+26/07/05 11:00:43 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.mongodb_mongodb-driver-core-4.8.2.jar with timestamp 1783224041947
+26/07/05 11:00:43 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.mongodb_mongodb-driver-core-4.8.2.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp16195047158281471461.tmp
+26/07/05 11:00:43 INFO Utils: /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp16195047158281471461.tmp has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.mongodb_mongodb-driver-core-4.8.2.jar
+26/07/05 11:00:43 INFO Executor: Adding file:/tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.mongodb_mongodb-driver-core-4.8.2.jar to class loader default
+26/07/05 11:00:43 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar with timestamp 1783224041947
+26/07/05 11:00:43 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp9987668467204880830.tmp
+26/07/05 11:00:43 INFO Utils: /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp9987668467204880830.tmp has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar
+26/07/05 11:00:43 INFO Executor: Adding file:/tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.apache.spark_spark-token-provider-kafka-0-10_2.12-3.5.1.jar to class loader default
+26/07/05 11:00:43 INFO Executor: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.xerial.snappy_snappy-java-1.1.10.3.jar with timestamp 1783224041947
+26/07/05 11:00:43 INFO Utils: Fetching spark://macht-Inspiron-15-3520.lan:36369/jars/org.xerial.snappy_snappy-java-1.1.10.3.jar to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp17971419237460032521.tmp
+26/07/05 11:00:43 INFO Utils: /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/fetchFileTemp17971419237460032521.tmp has been previously copied to /tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.xerial.snappy_snappy-java-1.1.10.3.jar
+26/07/05 11:00:43 INFO Executor: Adding file:/tmp/spark-bbe87fdc-21dc-456a-b461-120bcfb03467/userFiles-7525e7ae-c181-4abc-81af-eb6b96a62d1f/org.xerial.snappy_snappy-java-1.1.10.3.jar to class loader default
+26/07/05 11:00:43 INFO Utils: Successfully started service 'org.apache.spark.network.netty.NettyBlockTransferService' on port 46395.
+26/07/05 11:00:43 INFO NettyBlockTransferService: Server created on macht-Inspiron-15-3520.lan:46395
+26/07/05 11:00:43 INFO BlockManager: Using org.apache.spark.storage.RandomBlockReplicationPolicy for block replication policy
+26/07/05 11:00:43 INFO BlockManagerMaster: Registering BlockManager BlockManagerId(driver, macht-Inspiron-15-3520.lan, 46395, None)
+26/07/05 11:00:43 INFO BlockManagerMasterEndpoint: Registering block manager macht-Inspiron-15-3520.lan:46395 with 434.4 MiB RAM, BlockManagerId(driver, macht-Inspiron-15-3520.lan, 46395, None)
+26/07/05 11:00:43 INFO BlockManagerMaster: Registered BlockManager BlockManagerId(driver, macht-Inspiron-15-3520.lan, 46395, None)
+26/07/05 11:00:43 INFO BlockManager: Initialized BlockManager: BlockManagerId(driver, macht-Inspiron-15-3520.lan, 46395, None)
+26/07/05 11:00:45 WARN ResolveWriteToStream: spark.sql.adaptive.enabled is not supported in streaming DataFrames/Datasets and will be disabled.
+26/07/05 11:00:45 WARN AdminClientConfig: These configurations '[key.deserializer, value.deserializer, enable.auto.commit, max.poll.records, auto.offset.reset]' were supplied but are not used yet.
+26/07/05 11:00:46 WARN CaseInsensitiveStringMap: Converting duplicated key idfieldlist into CaseInsensitiveStringMap.
+26/07/05 11:00:46 WARN CaseInsensitiveStringMap: Converting duplicated key upsertDocument into CaseInsensitiveStringMap.
+26/07/05 11:00:46 WARN CaseInsensitiveStringMap: Converting duplicated key operationType into CaseInsensitiveStringMap.
+26/07/05 11:01:01 WARN CaseInsensitiveStringMap: Converting duplicated key idfieldlist into CaseInsensitiveStringMap.
+26/07/05 11:01:01 WARN CaseInsensitiveStringMap: Converting duplicated key upsertDocument into CaseInsensitiveStringMap.
+26/07/05 11:01:01 WARN CaseInsensitiveStringMap: Converting duplicated key operationType into CaseInsensitiveStringMap.
+26/07/05 11:01:03 WARN CaseInsensitiveStringMap: Converting duplicated key idfieldlist into CaseInsensitiveStringMap.
+26/07/05 11:01:03 WARN CaseInsensitiveStringMap: Converting duplicated key upsertDocument into CaseInsensitiveStringMap.
+26/07/05 11:01:03 WARN CaseInsensitiveStringMap: Converting duplicated key operationType into CaseInsensitiveStringMap.
+26/07/05 11:01:04 WARN CaseInsensitiveStringMap: Converting duplicated key idfieldlist into CaseInsensitiveStringMap.
+26/07/05 11:01:04 WARN CaseInsensitiveStringMap: Converting duplicated key upsertDocument into CaseInsensitiveStringMap.
+26/07/05 11:01:04 WARN CaseInsensitiveStringMap: Converting duplicated key operationType into CaseInsensitiveStringMap.
+26/07/05 11:01:05 WARN CaseInsensitiveStringMap: Converting duplicated key idfieldlist into CaseInsensitiveStringMap.
+26/07/05 11:01:05 WARN CaseInsensitiveStringMap: Converting duplicated key upsertDocument into CaseInsensitiveStringMap.
+26/07/05 11:01:05 WARN CaseInsensitiveStringMap: Converting duplicated key operationType into CaseInsensitiveStringMap.
+26/07/05 11:01:06 WARN CaseInsensitiveStringMap: Converting duplicated key idfieldlist into CaseInsensitiveStringMap.
+26/07/05 11:01:06 WARN CaseInsensitiveStringMap: Converting duplicated key upsertDocument into CaseInsensitiveStringMap.
+26/07/05 11:01:06 WARN CaseInsensitiveStringMap: Converting duplicated key operationType into CaseInsensitiveStringMap.
+26/07/05 11:01:06 WARN CaseInsensitiveStringMap: Converting duplicated key idfieldlist into CaseInsensitiveStringMap.
+26/07/05 11:01:06 WARN CaseInsensitiveStringMap: Converting duplicated key upsertDocument into CaseInsensitiveStringMap.
+26/07/05 11:01:06 WARN CaseInsensitiveStringMap: Converting duplicated key operationType into CaseInsensitiveStringMap.
+26/07/05 11:01:07 WARN CaseInsensitiveStringMap: Converting duplicated key idfieldlist into CaseInsensitiveStringMap.
+26/07/05 11:01:07 WARN CaseInsensitiveStringMap: Converting duplicated key upsertDocument into CaseInsensitiveStringMap.
+26/07/05 11:01:07 WARN CaseInsensitiveStringMap: Converting duplicated key operationType into CaseInsensitiveStringMap.
+26/07/05 11:01:08 WARN CaseInsensitiveStringMap: Converting duplicated key idfieldlist into CaseInsensitiveStringMap.
+26/07/05 11:01:08 WARN CaseInsensitiveStringMap: Converting duplicated key upsertDocument into CaseInsensitiveStringMap.
+26/07/05 11:01:08 WARN CaseInsensitiveStringMap: Converting duplicated key operationType into CaseInsensitiveStringMap.
+26/07/05 11:01:09 WARN CaseInsensitiveStringMap: Converting duplicated key idfieldlist into CaseInsensitiveStringMap.
+26/07/05 11:01:09 WARN CaseInsensitiveStringMap: Converting duplicated key upsertDocument into CaseInsensitiveStringMap.
+26/07/05 11:01:09 WARN CaseInsensitiveStringMap: Converting duplicated key operationType into CaseInsensitiveStringMap.
+26/07/05 11:01:09 WARN CaseInsensitiveStringMap: Converting duplicated key idfieldlist into CaseInsensitiveStringMap.
+26/07/05 11:01:09 WARN CaseInsensitiveStringMap: Converting duplicated key upsertDocument into CaseInsensitiveStringMap.
+26/07/05 11:01:09 WARN CaseInsensitiveStringMap: Converting duplicated key operationType into CaseInsensitiveStringMap.
+26/07/05 11:01:30 WARN CaseInsensitiveStringMap: Converting duplicated key idfieldlist into CaseInsensitiveStringMap.
+26/07/05 11:01:30 WARN CaseInsensitiveStringMap: Converting duplicated key upsertDocument into CaseInsensitiveStringMap.
+26/07/05 11:01:30 WARN CaseInsensitiveStringMap: Converting duplicated key operationType into CaseInsensitiveStringMap.
 ERROR:root:Exception while sending command.
 Traceback (most recent call last):
   File "/home/macht/Dev/HCMUS/Streaming/.venv/lib/python3.12/site-packages/pyspark/python/lib/py4j-0.10.9.7-src.zip/py4j/clientserver.py", line 511, in send_command
@@ -236,12 +329,13 @@ Traceback (most recent call last):
     raise Py4JNetworkError(
 py4j.protocol.Py4JNetworkError: Error while sending or receiving
 Traceback (most recent call last):
-  File "/home/macht/Dev/HCMUS/Streaming/src/spark_jobs/metadata_to_mongodb.py", line 117, in <module>
+  File "/home/macht/Dev/HCMUS/Streaming/src/spark_jobs/metadata_to_mongodb.py", line 105, in <module>
     main()
-  File "/home/macht/Dev/HCMUS/Streaming/src/spark_jobs/metadata_to_mongodb.py", line 113, in main
+  File "/home/macht/Dev/HCMUS/Streaming/src/spark_jobs/metadata_to_mongodb.py", line 101, in main
     query.awaitTermination()
   File "/home/macht/Dev/HCMUS/Streaming/.venv/lib/python3.12/site-packages/pyspark/python/lib/pyspark.zip/pyspark/sql/streaming/query.py", line 221, in awaitTermination
   File "/home/macht/Dev/HCMUS/Streaming/.venv/lib/python3.12/site-packages/pyspark/python/lib/py4j-0.10.9.7-src.zip/py4j/java_gateway.py", line 1322, in __call__
   File "/home/macht/Dev/HCMUS/Streaming/.venv/lib/python3.12/site-packages/pyspark/python/lib/pyspark.zip/pyspark/errors/exceptions/captured.py", line 179, in deco
   File "/home/macht/Dev/HCMUS/Streaming/.venv/lib/python3.12/site-packages/pyspark/python/lib/py4j-0.10.9.7-src.zip/py4j/protocol.py", line 334, in get_return_value
-py4j.protocol.Py4JError: An error occurred while calling o59.awaitTermination
+py4j.protocol.Py4JError: An error occurred while calling o68.awaitTermination
+Spark streaming job was stopped by user after verification completed.

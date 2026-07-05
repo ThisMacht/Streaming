@@ -23,7 +23,10 @@ The project uses two source modules for this task:
 
 The clone step uses a shallow clone to reduce download size. After cloning, the discovery step walks through the repository tree and selects Python files.
 
-The discovery policy excludes unnecessary files where possible, such as test folders, documentation examples, setup files, virtual environments, and generated files. This keeps the parser focused on source files that are useful for CPG construction.
+The discovery policy compares complete path components rather than searching for substrings. It
+excludes directories named `tests`, `test`, `test_utils`, `docs`, `examples`, `__pycache__`, or
+`.venv`; it also excludes `setup.py` and Python filenames matching `test_*.py`. A normal source
+name such as `contest.py` is therefore retained. The output is sorted deterministically.
 
 ## Commands
 
@@ -54,7 +57,7 @@ cat data/processed/discovered_files.json | head
 The discovery step produced a manifest containing the Python files selected for processing.
 
 ```text
-Discovered 120 Python files.
+Discovered 99 Python files.
 ```
 
 The manifest is used by the parser service when running in full repository mode.
@@ -67,8 +70,8 @@ Example structure:
 
 ```json
 {
-  "repo_name": "accelerate",
-  "total_files": 120,
+  "repo_path": "data/raw/accelerate",
+  "total_files": 99,
   "files": [
     "benchmarks/big_model_inference/measures_util.py",
     "benchmarks/fp8/ms_amp/ddp.py",
@@ -77,7 +80,8 @@ Example structure:
 }
 ```
 
-The exact list depends on the selected repository revision and the exclusion policy.
+The checked-in manifest contains 99 entries. A regenerated list can vary if the repository
+revision, exclusion policy, or controlled replay probe changes.
 
 ## Why File Discovery Matters
 

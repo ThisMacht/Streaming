@@ -154,6 +154,12 @@ The replay verification checks that:
 
 For Neo4j, the implementation applies file-level graph replacement during modified-file replay to avoid stale nodes and relationships from the previous version of the file.
 
+More precisely, the replay verifier performs a controlled direct Neo4j cleanup scoped to the
+target `repo_name` and `file_path` before republishing updated CPG events. This cleanup is part of
+the replay verification protocol because source edits can change structural node IDs and otherwise
+leave stale topology. Metadata replay remains event-driven through Kafka, Spark Structured
+Streaming, and MongoDB, with Kafka offsets owned by the Spark checkpoint.
+
 ## Reflection
 
 The architecture separates graph ingestion and metadata ingestion clearly. Neo4j receives graph topology directly from Kafka through the Neo4j Kafka Sink Connector, while MongoDB metadata is handled by Spark Structured Streaming.

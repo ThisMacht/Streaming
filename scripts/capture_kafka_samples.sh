@@ -7,12 +7,17 @@ cd "$ROOT_DIR"
 KAFKA_CONTAINER="${KAFKA_CONTAINER:-cpg-kafka}"
 BOOTSTRAP_SERVER="${BOOTSTRAP_SERVER:-kafka:29092}"
 OUTPUT_DIR="evidence/kafka"
-mkdir -p "$OUTPUT_DIR"
+LOG_DIR="evidence/logs"
+LOG_FILE="$LOG_DIR/kafka_sample_capture.log"
+mkdir -p "$OUTPUT_DIR" "$LOG_DIR"
+: > "$LOG_FILE"
+exec > >(tee -a "$LOG_FILE") 2>&1
 
 capture_sample() {
   local topic="$1"
-  local output_file="$2"
-  local empty_message="$3"
+  local json_file="$2"
+  local key_value_file="$3"
+  local empty_message="$4"
   local temporary_file
   temporary_file="$(mktemp)"
 
@@ -23,29 +28,32 @@ capture_sample() {
     --max-messages 1 \
     --timeout-ms 10000 \
     --property print.key=true \
-    --property 'key.separator= | ' > "$temporary_file" 2>/dev/null || true
+    --property 'key.separator=\t' > "$temporary_file" 2>/dev/null || true
 
   if [[ -s "$temporary_file" ]]; then
-    cp "$temporary_file" "$output_file"
-    echo "Captured $topic -> $output_file"
+    key="$(cut -f1 "$temporary_file")"
+    value="$(cut -f2- "$temporary_file")"
+    printf '%s\n' "$value" > "$json_file"
+    printf 'key=%s\nvalue=%s\n' "$key" "$value" > "$key_value_file"
+    echo "Captured $topic -> $json_file and $key_value_file"
   else
-    printf '%s\n' "$empty_message" > "$output_file"
-    echo "No message available for $topic -> $output_file"
+    printf '%s\n' "$empty_message" > "$json_file"
+    printf 'key=<not captured>\nvalue=%s\n' "$empty_message" > "$key_value_file"
+    echo "No message available for $topic"
   fi
   rm -f "$temporary_file"
 }
 
-capture_sample "cpg.nodes.v1" "$OUTPUT_DIR/node-sample.txt" \
-  "No message captured. Run the parser first."
-capture_sample "cpg.edges.v1" "$OUTPUT_DIR/edge-sample.txt" \
-  "No message captured. Run the parser first."
-capture_sample "cpg.metadata.v1" "$OUTPUT_DIR/metadata-sample.txt" \
-  "No message captured. Run the parser while Spark is stopped or use a separate evidence topic."
-capture_sample "cpg.errors.v1" "$OUTPUT_DIR/error-sample.txt" \
-  "No message captured. Run parser error sample first: python -m src.verification.emit_parser_error_sample"
+capture_sample "cpg.nodes.v1" "$OUTPUT_DIR/nodes_sample.json" "$OUTPUT_DIR/node-sample.txt" \
+  '{"error":"No message captured. Run the parser first."}'
+capture_sample "cpg.edges.v1" "$OUTPUT_DIR/edges_sample.json" "$OUTPUT_DIR/edge-sample.txt" \
+  '{"error":"No message captured. Run the parser first."}'
+capture_sample "cpg.metadata.v1" "$OUTPUT_DIR/metadata_sample.json" "$OUTPUT_DIR/metadata-sample.txt" \
+  '{"error":"No message captured. Run the parser while Spark is stopped."}'
+capture_sample "cpg.errors.v1" "$OUTPUT_DIR/errors_sample.json" "$OUTPUT_DIR/error-sample.txt" \
+  '{"error":"No message captured. Run python -m src.verification.emit_parser_error_sample first."}'
 
 echo "Kafka sample capture complete:"
-for sample in "$OUTPUT_DIR"/*-sample.txt; do
+for sample in "$OUTPUT_DIR"/*_sample.json; do
   echo "  $sample"
 done
-

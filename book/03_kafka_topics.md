@@ -91,9 +91,10 @@ repository-wide loop.
 
 ## Verification
 
-The tracked Terminal 2 log shows all four topic names and a `RUNNING` Neo4j connector. It also
-records `successful=121 failed=0` for the valid discovery manifest and separately consumes one
-message from `cpg.errors.v1` for the controlled syntax error.
+The tracked Terminal 2 log shows all four topic names and a `RUNNING` Neo4j connector. That log was
+captured before the path-aware test exclusion update and therefore records an older 121-file run;
+the current checked-in manifest contains 99 files. Regenerate the terminal evidence before final
+submission so runtime counts match the current manifest.
 
 Useful inspection commands are:
 
@@ -112,14 +113,15 @@ The four raw broker samples are captured with:
 ./scripts/capture_kafka_samples.sh
 ```
 
-The helper prints the Kafka key before the JSON value and writes one message per topic:
+The helper preserves the raw JSON value and also writes an explicit `key=...` / `value=...` text
+artifact per topic:
 
 | Topic | Evidence file | Expected key |
 |---|---|---|
-| `cpg.nodes.v1` | `evidence/kafka/node-sample.txt` | `node_id` |
-| `cpg.edges.v1` | `evidence/kafka/edge-sample.txt` | `edge_id` |
-| `cpg.metadata.v1` | `evidence/kafka/metadata-sample.txt` | `metadata_id` |
-| `cpg.errors.v1` | `evidence/kafka/error-sample.txt` | `repo_name:file_path` |
+| `cpg.nodes.v1` | `nodes_sample.json`, `node-sample.txt` | `node_id` |
+| `cpg.edges.v1` | `edges_sample.json`, `edge-sample.txt` | `edge_id` |
+| `cpg.metadata.v1` | `metadata_sample.json`, `metadata-sample.txt` | `metadata_id` |
+| `cpg.errors.v1` | `errors_sample.json`, `error-sample.txt` | `repo_name:file_path` |
 
 Each captured JSON value includes `schema_version` and `event_time`. Node events also expose the
 AST `structural_path`; graph and metadata keys use deterministic IDs so identical-content replay
@@ -127,7 +129,7 @@ addresses the same downstream entity. If the error sample is empty, first run
 `python -m src.verification.emit_parser_error_sample` and capture again. The tracked sample files
 are authoritative raw excerpts rather than reformatted examples.
 
-Captured excerpts (values shortened only after the fields relevant to this check):
+Captured excerpts (the display below adds labels for readability):
 
 ```text
 node key | {"schema_version":"1.0","event_time":"2026-07-04T11:01:47.041898Z",...,"structural_path":"module.body[0].args",...}
@@ -135,6 +137,9 @@ edge key | {"schema_version":"1.0","event_time":"2026-07-04T11:01:47.041898Z",..
 metadata key | {"schema_version":"1.0","event_time":"2026-07-04T11:01:47.041898Z",...,"metadata_id":"59f203...561ea",...}
 accelerate:src/accelerate/_lab_parser_error.py | {"schema_version":"1.0","event_time":"2026-07-04T11:01:47.360504Z",...,"error_type":"SyntaxError",...}
 ```
+
+Infrastructure evidence is captured separately in `evidence/logs/create_topics.log`,
+`kafka_connectors_list.json`, `kafka_connect_status.json`, and `kafka_sample_capture.log`.
 
 ## Reflection
 

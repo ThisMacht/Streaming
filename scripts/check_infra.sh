@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-set -e
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$PROJECT_ROOT"
+mkdir -p evidence/logs
+LOG_FILE="evidence/logs/check_infra.log"
+: > "$LOG_FILE"
+exec > >(tee -a "$LOG_FILE") 2>&1
 
 echo "Docker containers:"
 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"

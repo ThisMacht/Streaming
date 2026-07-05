@@ -65,7 +65,9 @@ db.source_metadata.getIndexes()
 ```
 
 The project verifier additionally groups by `metadata_id` and by `(repo_name, file_path)`. The
-tracked full-run output reports 121 documents and zero duplicate groups for both identities.
+tracked full-run output reports 121 documents and zero duplicate groups, but it predates the
+current 99-file path-aware manifest. Final evidence must be regenerated; replay correctness is
+determined by a zero document-count delta rather than a hard-coded global total.
 
 ## Evidence
 
@@ -76,8 +78,8 @@ tracked full-run output reports 121 documents and zero duplicate groups for both
 Mongo Express view of the `source_metadata` collection from an earlier 120-file ingestion run.
 ```
 
-The collection screenshot predates the added replay probe. The later tracked terminal evidence
-records 121 documents after the probe was included.
+The collection screenshot and later 121-document terminal evidence predate the current discovery
+policy and should be refreshed manually after the final 99-file run.
 
 ```{figure} images/mongo-metadata-document.png
 :name: mongo-metadata-document

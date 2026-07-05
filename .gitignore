@@ -42,6 +42,9 @@ outputs/demo_logs/*.log
 !evidence/
 !evidence/logs/
 !evidence/logs/*.log
+!evidence/logs/*.json
+!evidence/kafka/
+!evidence/kafka/*.json
 !evidence/screenshots/
 !evidence/screenshots/*.png
 

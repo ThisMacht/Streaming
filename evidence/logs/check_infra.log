@@ -1,0 +1,24 @@
+Docker containers:
+NAMES               STATUS                   PORTS
+cpg-kafka-connect   Up 7 minutes (healthy)   0.0.0.0:8083->8083/tcp, [::]:8083->8083/tcp, 9092/tcp
+cpg-mongo-express   Up 7 minutes             0.0.0.0:8081->8081/tcp, [::]:8081->8081/tcp
+cpg-kafka           Up 7 minutes             0.0.0.0:9092->9092/tcp, [::]:9092->9092/tcp, 0.0.0.0:29092->29092/tcp, [::]:29092->29092/tcp
+cpg-neo4j           Up 7 minutes             0.0.0.0:7474->7474/tcp, [::]:7474->7474/tcp, 7473/tcp, 0.0.0.0:7687->7687/tcp, [::]:7687->7687/tcp
+cpg-mongodb         Up 7 minutes             0.0.0.0:27017->27017/tcp, [::]:27017->27017/tcp
+cpg-zookeeper       Up 7 minutes             2888/tcp, 0.0.0.0:2181->2181/tcp, [::]:2181->2181/tcp, 3888/tcp
+
+Kafka topics:
+__consumer_offsets
+connect-configs
+connect-offsets
+connect-statuses
+cpg.edges.v1
+cpg.errors.v1
+cpg.metadata.v1
+cpg.nodes.v1
+
+Kafka Connect connectors:
+["neo4j-cpg-sink"]
+
+Neo4j connector status:
+{"name":"neo4j-cpg-sink","connector":{"state":"RUNNING","worker_id":"kafka-connect:8083"},"tasks":[{"id":0,"state":"RUNNING","worker_id":"kafka-connect:8083"}],"type":"sink"}

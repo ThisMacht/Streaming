@@ -5,9 +5,9 @@ repository. It cloned and discovered Python sources, parsed one file at a time, 
 event categories, ingested graph topology directly into Neo4j, and used Spark Structured Streaming
 to upsert source metadata into MongoDB.
 
-The final demo included 121 valid Python files after adding the controlled replay probe. Runtime
-logs, Kafka output, Neo4j Browser views, Mongo Express documents, and replay screenshots provide
-evidence for the major pipeline paths.
+The current path-aware discovery manifest includes 99 Python files, including the controlled
+replay probe. Some tracked runtime logs and screenshots predate this exclusion update and must be
+regenerated before final submission.
 
 ## What Worked
 
@@ -20,7 +20,7 @@ evidence for the major pipeline paths.
 - controlled modified-file replay while Spark remained active;
 - structured `SyntaxError` publication without terminating the valid-file pipeline.
 
-The replay evidence was particularly useful: MongoDB remained at 121 documents while the target
+The replay evidence was particularly useful: MongoDB document count remained constant while the target
 hash, statistics, ingestion time, and batch marker changed. With structural-path identity, Neo4j
 replaced the probe's 10-node/18-edge baseline with 14 nodes/26 edges, with no duplicate IDs or
 unresolved placeholders.
@@ -59,7 +59,9 @@ Spark query progress, dead-letter volume, and unresolved placeholder counts as o
 
 | Requirement | Evidence file/log/screenshot |
 |---|---|
-| Four Kafka event contracts and keys | `evidence/kafka/node-sample.txt`, `edge-sample.txt`, `metadata-sample.txt`, `error-sample.txt` |
+| Four Kafka event contracts and keys | `evidence/kafka/*_sample.json` and `evidence/kafka/*-sample.txt` |
+| Topic and connector status | `evidence/logs/create_topics.log`, `kafka_connectors_list.json`, `kafka_connect_status.json` |
+| MongoDB indexes | `evidence/logs/mongodb_indexes.log` |
 | Parser identity and schema tests | `evidence/logs/pytest.log` |
 | Spark checkpoint idle resume | `evidence/logs/checkpoint_resume.log` |
 | MongoDB metadata and replay | `book/images/mongo-metadata-document.png`, `mongo-replay-after.png`, `evidence/logs/terminal_2_pipeline_latest.log` |

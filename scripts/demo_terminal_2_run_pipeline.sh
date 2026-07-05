@@ -9,13 +9,10 @@ timestamp="$(date +%Y%m%d_%H%M%S)"
 log_file="outputs/demo_logs/terminal_2_pipeline_${timestamp}.log"
 evidence_file="evidence/logs/terminal_2_pipeline_latest.log"
 
-copy_evidence_log() {
-  cp "$log_file" "$evidence_file" 2>/dev/null || true
-}
-trap copy_evidence_log EXIT
+: > "$evidence_file"
 
 source .venv/bin/activate
-exec > >(tee -a "$log_file") 2>&1
+exec > >(tee -a "$log_file" "$evidence_file") 2>&1
 
 probe="src/accelerate/_lab_replay_probe.py"
 
@@ -82,6 +79,5 @@ python -m src.verification.replay_one_file --file "$probe" --restore --dry-run
 
 echo ""
 echo "Step 12/12: Preserve selected evidence"
-copy_evidence_log
 echo "Tracked evidence copy: $evidence_file"
 echo "Pipeline demo complete. You may now stop Spark in Terminal 1 with Ctrl+C."

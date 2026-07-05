@@ -38,6 +38,11 @@ python -m src.verification.replay_one_file \
   --modify --cleanup-neo4j-before-replay --wait-seconds 10
 ```
 
+The command writes `evidence/logs/identity_replay_verification.log` with both hashes, MongoDB
+document counts and delta, target-file Neo4j node/edge counts before and after, duplicate identity
+group counts, and checkpoint existence. The exact global document total is revision-dependent;
+the required replay invariant is a delta of zero.
+
 ## Before/After Checks
 
 | Check | Expected result | Evidence |
@@ -45,7 +50,7 @@ python -m src.verification.replay_one_file \
 | Same target file reprocessed | Only the probe is passed to the replay publisher | Replay target logged explicitly |
 | `metadata_id` stable | Same logical document identity | `59f203...561ea` before and after |
 | `file_hash` changed | Controlled source edit is real | `1ebfb6...ba523` → `807314...0e0fd` |
-| MongoDB document count | No increase | 121 → 121; delta `+0` |
+| MongoDB document count | No increase | Before equals after; delta `+0` |
 | Ingestion progress | Later write is visible | `spark_batch_id` 1 → 7 and new `ingested_at` |
 | Neo4j replacement | Old file topology removed, replacement added | Current identity-hardened verifier reports 14 nodes/26 edges |
 | Duplicate identities | No duplicate groups | MongoDB, node ID, and edge ID checks all report 0 |
@@ -65,7 +70,8 @@ MongoDB metadata from the original controlled replay, before structural-path ide
 
 The original screenshot records 13 nodes/25 edges. After preserving each positionless AST
 occurrence, `evidence/logs/identity_replay_verification.log` records the same stable metadata ID
-and modified hash with 14 nodes/26 edges, 121 total documents, and zero duplicate identities.
+and modified hash with 14 nodes/26 edges, an unchanged historical document total, and zero
+duplicate identities. Regenerate the evidence after applying the current discovery policy.
 
 ## Neo4j Evidence
 

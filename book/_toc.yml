@@ -8,4 +8,5 @@ chapters:
   - file: 04_neo4j_ingestion
   - file: 05_mongodb_ingestion
   - file: 06_replay_verification
+  - file: notebooks/pipeline_demo
   - file: conclusion

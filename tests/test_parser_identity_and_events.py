@@ -2,12 +2,16 @@
 
 import ast
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 
+from src.common.config import Settings
 from src.common.schemas import BaseEvent
 from src.parser_service.ast_parser import iter_ast_with_path
 from src.parser_service.event_builder import build_error_event, build_events_for_file
+from src.parser_service.kafka_producer import CpgKafkaProducer
+from src.parser_service.main import process_file
 
 
 def build_source_events(tmp_path: Path, source: str):
@@ -81,3 +85,54 @@ def test_same_content_reprocess_does_not_change_ids(tmp_path: Path) -> None:
     second_nodes, second_edges, _ = build_source_events(tmp_path, source)
     assert {event.node_id for event in first_nodes} == {event.node_id for event in second_nodes}
     assert {event.edge_id for event in first_edges} == {event.edge_id for event in second_edges}
+
+
+def test_process_file_publishes_parser_error(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    broken = repo / "broken.py"
+    broken.write_text("def broken(:\n    pass\n", encoding="utf-8")
+    settings = Settings(
+        repo_name="example",
+        repo_url="unused",
+        repo_local_path=str(repo),
+        kafka_bootstrap_servers="unused:9092",
+        kafka_topic_nodes="nodes",
+        kafka_topic_edges="edges",
+        kafka_topic_metadata="metadata",
+        kafka_topic_errors="errors",
+        neo4j_uri="bolt://unused",
+        neo4j_username="unused",
+        neo4j_password="unused",
+        mongodb_uri="mongodb://unused",
+        mongodb_database="unused",
+        mongodb_collection_metadata="unused",
+        spark_checkpoint_location="unused",
+    )
+    producer = Mock(spec=CpgKafkaProducer)
+
+    assert process_file(settings, repo, broken, producer, dry_run=False) is False
+    producer.send_error.assert_called_once()
+    topic, event = producer.send_error.call_args.args
+    assert topic == "errors"
+    assert event.file_path == "broken.py"
+    assert event.error_type == "SyntaxError"
+
+
+def test_kafka_entity_keys_follow_event_identity(tmp_path: Path) -> None:
+    nodes, edges, metadata = build_source_events(tmp_path, "value = source + 1\n")
+    error = build_error_event("example", "sample.py", ValueError("bad source"))
+    producer = object.__new__(CpgKafkaProducer)
+    producer._send = Mock()  # type: ignore[method-assign]
+
+    producer.send_node("nodes", nodes[0])
+    producer.send_edge("edges", edges[0])
+    producer.send_metadata("metadata", metadata)
+    producer.send_error("errors", error)
+
+    assert [call.args[1] for call in producer._send.call_args_list] == [
+        nodes[0].node_id,
+        edges[0].edge_id,
+        metadata.metadata_id,
+        "example:sample.py",
+    ]

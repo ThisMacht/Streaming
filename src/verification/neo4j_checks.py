@@ -26,6 +26,43 @@ def get_counts() -> dict[str, int]:
     return {"node_count": node_count, "edge_count": edge_count}
 
 
+def get_file_counts(repo_name: str, file_path: str) -> dict[str, int]:
+    """Return CPG node and incident CPG-edge counts for one repository file."""
+    settings = load_settings()
+    with GraphDatabase.driver(
+        settings.neo4j_uri, auth=(settings.neo4j_username, settings.neo4j_password)
+    ) as driver:
+        record = driver.execute_query(
+            """MATCH (n:CPGNode {repo_name: $repo_name, file_path: $file_path})
+            OPTIONAL MATCH (n)-[r:CPG_EDGE]-()
+            RETURN count(DISTINCT n) AS node_count,
+                   count(DISTINCT r) AS edge_count""",
+            repo_name=repo_name,
+            file_path=file_path,
+            routing_="r",
+        ).records[0]
+    return {"node_count": int(record["node_count"]), "edge_count": int(record["edge_count"])}
+
+
+def get_duplicate_identity_counts() -> dict[str, int]:
+    """Return duplicate logical node and edge identity group counts."""
+    settings = load_settings()
+    with GraphDatabase.driver(
+        settings.neo4j_uri, auth=(settings.neo4j_username, settings.neo4j_password)
+    ) as driver:
+        node_groups = driver.execute_query(
+            """MATCH (n:CPGNode) WITH n.id AS id, count(*) AS c
+            WHERE c > 1 RETURN count(*) AS count""",
+            routing_="r",
+        ).records[0]["count"]
+        edge_groups = driver.execute_query(
+            """MATCH ()-[r:CPG_EDGE]->() WITH r.id AS id, count(*) AS c
+            WHERE id IS NOT NULL AND c > 1 RETURN count(*) AS count""",
+            routing_="r",
+        ).records[0]["count"]
+    return {"node_id": int(node_groups), "edge_id": int(edge_groups)}
+
+
 def top_files() -> list[dict[str, Any]]:
     settings = load_settings()
     with GraphDatabase.driver(

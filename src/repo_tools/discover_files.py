@@ -9,14 +9,31 @@ import typer
 from src.common.config import load_settings
 from src.common.logging_utils import get_logger
 
-EXCLUDE_PATTERNS = ["/tests/", "/test/", "/examples/", "/docs/", "setup.py", "__pycache__", ".venv"]
+EXCLUDED_DIRECTORY_NAMES = {
+    "tests",
+    "test",
+    "test_utils",
+    "examples",
+    "docs",
+    "__pycache__",
+    ".venv",
+}
+EXCLUDED_FILENAMES = {"setup.py"}
 logger = get_logger(__name__)
 app = typer.Typer(add_completion=False)
 
 
 def should_exclude(path: Path) -> bool:
-    normalized = f"/{path.as_posix().lstrip('/')}"
-    return any(pattern in normalized for pattern in EXCLUDE_PATTERNS)
+    """Return whether a path matches an explicit directory or filename rule.
+
+    Comparing complete path components avoids excluding valid names such as
+    ``contest.py`` or ``latest_release/`` merely because they contain ``test``.
+    """
+    return (
+        any(part in EXCLUDED_DIRECTORY_NAMES for part in path.parts[:-1])
+        or path.name in EXCLUDED_FILENAMES
+        or (path.name.startswith("test_") and path.suffix == ".py")
+    )
 
 
 def discover_python_files(repo_path: Path, exclude: bool = True) -> list[Path]:

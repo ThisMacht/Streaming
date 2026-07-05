@@ -215,6 +215,18 @@ Raw logs are saved under `outputs/demo_logs/`; selected latest logs are copied t
 [demo logging guide](markdowns/demo_logging.md) for the two-terminal workflow, replay behavior,
 and expected results.
 
+After infrastructure is ready, capture the non-visual configuration evidence:
+
+```bash
+./scripts/capture_connect_status.sh
+./scripts/capture_mongodb_indexes.sh
+./scripts/capture_kafka_samples.sh
+```
+
+Kafka capture preserves raw JSON and companion `key=...` / `value=...` text files. Stop Terminal 1
+with `Ctrl+C` once, only after Terminal 2 finishes. The wrapper records an explicit user-stop
+message; a Py4J traceback caused only by forced/repeated shutdown is a shutdown artifact.
+
 ## Verification Commands
 
 ```bash
@@ -226,7 +238,8 @@ python -m src.verification.verify_checkpoint_resume \
 python -m src.verification.verify_mongodb_metadata
 python -m src.verification.verify_neo4j_counts
 python -m src.verification.replay_one_file \
-  --file src/accelerate/_lab_replay_probe.py --modify
+  --file src/accelerate/_lab_replay_probe.py \
+  --modify --cleanup-neo4j-before-replay --wait-seconds 10
 ```
 
 Run checkpoint verification after restarting Spark with the same checkpoint and while no new
@@ -237,3 +250,25 @@ Published Jupyter Book: <https://thismacht.github.io/Streaming/>
 
 When GitHub Actions deploys the site, `book/_build` is a local build artifact and should not be
 committed.
+
+## Before submission
+
+```bash
+source .venv/bin/activate
+pytest -q
+./scripts/init_infra.sh
+./scripts/check_infra.sh
+./scripts/capture_connect_status.sh
+./scripts/capture_mongodb_indexes.sh
+# Terminal 1: ./scripts/demo_terminal_1_spark.sh
+# Terminal 2: ./scripts/demo_terminal_2_run_pipeline.sh
+./scripts/capture_kafka_samples.sh
+python -m src.verification.verify_checkpoint_resume \
+  --output evidence/logs/checkpoint_resume.log
+rm -rf book/_build
+jupyter-book build book
+git status --short
+```
+
+Before the final build, manually capture the required UI screenshots and execute the evidence
+notebook. Do not commit `book/_build`.
