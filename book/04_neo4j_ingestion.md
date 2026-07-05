@@ -38,8 +38,9 @@ Neo4j global node and relationship count query.
 Neo4j Browser visualization of CPG topology and properties.
 ```
 
-The modified replay probe resolves to 14 nodes and 26 CPG edges. Identity checks return zero
-duplicate groups:
+The modified replay probe changes from 14 nodes / 27 CPG edges before replacement to 14 nodes /
+26 CPG edges afterward. The controlled edit changes the CPG structure, so the one-edge decrease
+is expected. Identity checks return zero duplicate groups:
 
 ```{figure} images/neo4j-duplicate_node.png
 :name: neo4j-duplicate-node

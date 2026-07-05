@@ -51,6 +51,11 @@ structural node IDs, the verification protocol may first delete topology scoped 
 `repo_name` and `file_path`. This direct Neo4j maintenance step is only a file-scoped replay
 verification protocol; it is not part of the normal ingestion architecture.
 
+In the recorded run, the target changed from 14 nodes / 27 edges to 14 nodes / 26 edges. The
+controlled edit changed the CPG structure, so the one-edge decrease is expected. Both Neo4j
+duplicate-identity checks returned zero, while MongoDB replaced the existing stable metadata
+document instead of inserting another document.
+
 ## Evidence and result
 
 The connector and its task are `RUNNING` in

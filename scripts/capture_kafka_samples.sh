@@ -19,6 +19,8 @@ capture_sample() {
   local key_value_file="$3"
   local empty_message="$4"
   local temporary_file
+  local key
+  local value
   temporary_file="$(mktemp)"
 
   docker exec -i "$KAFKA_CONTAINER" kafka-console-consumer \
@@ -28,13 +30,20 @@ capture_sample() {
     --max-messages 1 \
     --timeout-ms 10000 \
     --property print.key=true \
-    --property 'key.separator=\t' > "$temporary_file" 2>/dev/null || true
+    --property 'key.separator=|' > "$temporary_file" 2>/dev/null || true
 
   if [[ -s "$temporary_file" ]]; then
-    key="$(cut -f1 "$temporary_file")"
-    value="$(cut -f2- "$temporary_file")"
+    # Kafka keys in this project are hashes or repo:path identities and never
+    # contain "|". Split only the first separator so the JSON payload remains
+    # byte-for-byte intact even if a string value contains another pipe.
+    IFS='|' read -r key value < "$temporary_file"
     printf '%s\n' "$value" > "$json_file"
     printf 'key=%s\nvalue=%s\n' "$key" "$value" > "$key_value_file"
+    if ! .venv/bin/python -m json.tool "$json_file" > /dev/null; then
+      echo "Captured payload is not valid JSON: $json_file" >&2
+      rm -f "$temporary_file"
+      return 1
+    fi
     echo "Captured $topic -> $json_file and $key_value_file"
   else
     printf '%s\n' "$empty_message" > "$json_file"
@@ -55,5 +64,6 @@ capture_sample "cpg.errors.v1" "$OUTPUT_DIR/errors_sample.json" "$OUTPUT_DIR/err
 
 echo "Kafka sample capture complete:"
 for sample in "$OUTPUT_DIR"/*_sample.json; do
+  .venv/bin/python -m json.tool "$sample" > /dev/null
   echo "  $sample"
 done

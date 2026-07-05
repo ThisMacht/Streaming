@@ -3,7 +3,7 @@
 This Jupyter Book documents an incremental Code Property Graph (CPG) pipeline for the
 [`huggingface/accelerate`](https://github.com/huggingface/accelerate) Python repository. The lab
 goal is to discover source files, parse one file at a time, publish stable events, and maintain
-queryable graph and metadata views while supporting idempotent replay of one modified file.
+queryable graph and metadata views while supporting controlled replacement of one modified file.
 
 ## Pipeline at a glance
 
@@ -25,7 +25,7 @@ Spark is used only on the metadata path; it is not part of Neo4j graph ingestion
 | Kafka | Four versioned topics created |
 | Neo4j connector | Connector and task `RUNNING` |
 | MongoDB identity | Unique `metadata_id_1` index exists |
-| Modified replay probe | 14 nodes, 26 edges in MongoDB and Neo4j |
+| Modified replay probe | Neo4j changed from 14 nodes / 27 edges to 14 nodes / 26 edges |
 | Neo4j duplicate groups | 0 node IDs, 0 edge IDs |
 | Checkpoint resume | Passed; metadata remained 99 before and after |
 | Automated tests | 19 passed |

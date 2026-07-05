@@ -11,7 +11,8 @@ Structured Streaming metadata ingestion into MongoDB, and controlled modified-fi
 - Captured node, edge, metadata, and parser-error key/value messages are under `book/kafka/`.
 - `book/images/` includes Neo4j Browser, MongoDB, Spark Structured Streaming, replay, and
   duplicate-check views.
-- The modified probe is 14 nodes and 26 edges in both metadata and graph verification.
+- The modified probe changes from 14 nodes / 27 edges to 14 nodes / 26 edges in Neo4j; MongoDB
+  updates the same metadata document to the final 14-node / 26-edge state.
 - Duplicate Neo4j node-ID and edge-ID groups are both zero.
 - Checkpoint resume retains 99 metadata documents before and after.
 - The automated suite reports 19 passing tests.

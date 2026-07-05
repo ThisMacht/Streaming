@@ -31,6 +31,11 @@ Short raw key/value captures are tracked instead of pasting large JSON documents
 - [metadata sample](kafka/metadata-sample.txt)
 - [error sample](kafka/error-sample.txt)
 
+Machine-valid payload-only JSON is also available as [node JSON](kafka/nodes_sample.json),
+[edge JSON](kafka/edges_sample.json), [metadata JSON](kafka/metadata_sample.json), and
+[error JSON](kafka/errors_sample.json). Kafka keys are intentionally kept only in the companion
+text captures.
+
 Connector discovery and status are recorded in
 [`logs/kafka_connectors_list.json`](logs/kafka_connectors_list.json) and
 [`logs/kafka_connect_status.json`](logs/kafka_connect_status.json). The latter shows the Neo4j

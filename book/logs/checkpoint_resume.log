@@ -1,0 +1,7 @@
+checkpoint_location=outputs/checkpoints/mongodb_metadata
+checkpoint_exists=True
+checkpoint_artifacts_before=21
+checkpoint_artifacts_after=21
+metadata_count_before=99
+metadata_count_after=99
+result=PASSED checkpoint resumed without duplicating unchanged metadata
