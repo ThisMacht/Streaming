@@ -1,167 +1,66 @@
-# Architecture Diagram
+# Pipeline Architecture
 
-This chapter describes the architecture of the incremental Code Property Graph streaming pipeline.
+## Goal
 
-The selected repository is:
-
-```text
-https://github.com/huggingface/accelerate
-```
-
-The system parses Python source files one by one, publishes structured events to Apache Kafka, and writes the results into Neo4j and MongoDB.
-
-## Overall Architecture
+The architecture separates graph topology from source metadata so that each stream has one clear
+owner and replay behavior can be verified independently.
 
 ```{figure} images/architecture.svg
 :name: architecture-diagram
 :width: 95%
 
-Architecture of the incremental Code Property Graph streaming pipeline.
+Incremental CPG pipeline and its independent graph, metadata, and error paths.
 ```
 
-## Main Pipeline
+## Implementation approach
 
-The main pipeline contains four stages:
+The parser reads one discovered Python file at a time and publishes events with stable identities,
+`schema_version`, `event_time`, `repo_name`, and `file_path`.
+
+**Graph path**
 
 ```text
-huggingface/accelerate Repository
-        |
-        v
-Parser Service
-        |
-        v
-Apache Kafka
-   |                     |
-   v                     v
-Neo4j Kafka Sink         Spark Structured Streaming
-   |                     |
-   v                     v
-Neo4j Graph Database     MongoDB source_metadata
+Parser -> cpg.nodes.v1 / cpg.edges.v1 -> Neo4j Kafka Sink Connector -> Neo4j
 ```
 
-The Parser Service is responsible for reading Python files incrementally. Instead of parsing the whole repository in one batch, it processes one source file at a time and emits events to Kafka.
+The connector applies `MERGE`-based Cypher for nodes, relationships, repositories, and source
+files. **Spark is not used for Neo4j graph ingestion.**
 
-## Components
-
-| Component | Purpose |
-|---|---|
-| Parser Service | Parses Python files one by one and emits CPG events |
-| Apache Kafka | Carries node, edge, metadata, and parser error events |
-| Neo4j Kafka Sink Connector | Consumes graph events from Kafka and writes them directly to Neo4j |
-| Neo4j | Stores CPG graph topology |
-| Spark Structured Streaming | Consumes metadata events from Kafka |
-| MongoDB | Stores source metadata documents |
-| Mongo Express | Provides a database UI for inspecting metadata documents |
-
-## Kafka Topic Layout
-
-The parser emits four categories of events.
-
-| Topic | Event type | Purpose |
-|---|---|---|
-| `cpg.nodes.v1` | Node events | Carries CPG node information |
-| `cpg.edges.v1` | Edge events | Carries AST, CFG, DFG, and call relationships |
-| `cpg.metadata.v1` | Metadata events | Carries source file statistics and parsing metadata |
-| `cpg.errors.v1` | Error events | Carries parser errors for failed files |
-
-Each event includes a `schema_version` field and an `event_time` timestamp. This makes the event format easier to evolve and helps with debugging the streaming pipeline.
-
-## Neo4j Ingestion Path
-
-Node and edge topics are consumed by the Neo4j Kafka Sink Connector:
+**Metadata path**
 
 ```text
-cpg.nodes.v1
-cpg.edges.v1
-      |
-      v
-Neo4j Kafka Sink Connector
-      |
-      v
-Neo4j
+Parser -> cpg.metadata.v1 -> Spark Structured Streaming -> MongoDB Spark Connector -> MongoDB
 ```
 
-This path does not use Spark. Graph topology is written directly from Kafka into Neo4j.
+Spark owns Kafka offsets and the checkpoint at `outputs/checkpoints/mongodb_metadata`. Connector
+replace/upsert maintains one `cpg_lab.source_metadata` document per stable `metadata_id`.
 
-The connector uses merge-based Cypher logic to avoid creating duplicate graph elements when the same file is replayed.
-
-## MongoDB Ingestion Path
-
-Metadata events are consumed by Spark Structured Streaming:
+**Error path**
 
 ```text
-cpg.metadata.v1
-      |
-      v
-Spark Structured Streaming
-      |
-      v
-MongoDB source_metadata
+Parser failure -> cpg.errors.v1
 ```
 
-Spark keeps a checkpoint directory so that it can resume from the last committed Kafka offsets after restart.
+A structured error event isolates a malformed file without terminating processing of other files.
 
-MongoDB metadata documents use a stable `metadata_id`. During replay, the metadata document is replaced through stable-key upsert instead of being inserted as a duplicate document.
+**Replay path**
 
-## Parser Error Path
+Only the modified replay probe is parsed and republished. Stable IDs, MongoDB upsert, its unique
+index, and Neo4j `MERGE` prevent duplicate identities. Because a source edit can remove or change
+structural node IDs, the verification protocol may first delete topology scoped to that one
+`repo_name` and `file_path`. This direct Neo4j maintenance step is only a file-scoped replay
+verification protocol; it is not part of the normal ingestion architecture.
 
-Parser errors are sent to a separate Kafka topic:
+## Evidence and result
 
-```text
-cpg.errors.v1
-      |
-      v
-Parser Error Logs / Debugging
-```
-
-This prevents one malformed Python file from stopping the whole pipeline. The parser catches the exception, creates a structured error event, and continues processing other files.
-
-## Idempotency Strategy
-
-The pipeline avoids duplicates by using deterministic identifiers.
-
-### Node identity
-
-Node identifiers are based on stable source information such as repository name, file path, node type, line number, column offset, and node name.
-
-### Edge identity
-
-Edge identifiers are based on repository name, file path, edge type, source node ID, and target node ID.
-
-### Metadata identity
-
-Metadata documents use:
-
-```text
-sha256(repo_name + file_path)
-```
-
-This allows MongoDB to update the metadata document for a replayed file instead of inserting another document.
-
-## Replay Strategy
-
-For modified-file replay, the system processes only the target Python file again.
-
-The replay verification checks that:
-
-| Target | Expected behavior |
-|---|---|
-| Parser Service | Reprocesses one modified file |
-| Kafka | Receives replacement node, edge, and metadata events |
-| Neo4j | Reflects the updated file graph without duplicate topology |
-| MongoDB | Updates the same metadata document using stable `metadata_id` |
-| Spark checkpoint | Advances after consuming the replay metadata event |
-
-For Neo4j, the implementation applies file-level graph replacement during modified-file replay to avoid stale nodes and relationships from the previous version of the file.
-
-More precisely, the replay verifier performs a controlled direct Neo4j cleanup scoped to the
-target `repo_name` and `file_path` before republishing updated CPG events. This cleanup is part of
-the replay verification protocol because source edits can change structural node IDs and otherwise
-leave stale topology. Metadata replay remains event-driven through Kafka, Spark Structured
-Streaming, and MongoDB, with Kafka offsets owned by the Spark checkpoint.
+The connector and its task are `RUNNING` in
+[`logs/kafka_connect_status.json`](logs/kafka_connect_status.json). The replay result is 14 nodes
+and 26 edges for the modified probe, with zero duplicate node-ID and edge-ID groups. Metadata
+remains at 99 documents after an idle checkpoint resume.
 
 ## Reflection
 
-The architecture separates graph ingestion and metadata ingestion clearly. Neo4j receives graph topology directly from Kafka through the Neo4j Kafka Sink Connector, while MongoDB metadata is handled by Spark Structured Streaming.
-
-This separation matches the lab requirement and also makes verification easier: Neo4j can be checked with Cypher queries, while MongoDB can be checked through Mongo Express and metadata document inspection.
+The split routing worked well: direct connector ingestion keeps graph traffic out of Spark, while
+Structured Streaming supplies checkpointed metadata processing. The error topic makes failures
+observable. Modified-file graph replacement still needs explicit lifecycle semantics; the lab uses
+a narrowly scoped cleanup protocol rather than claiming that `MERGE` can delete stale topology.

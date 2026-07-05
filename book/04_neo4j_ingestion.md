@@ -1,105 +1,63 @@
-# Task 4: Graph Topology Ingestion into Neo4j
+# Task 4: Neo4j Graph Ingestion
 
-## Objective
+## Goal
 
-The graph path must ingest parser topology directly from Kafka into Neo4j. Spark is intentionally
-absent from this path:
+Ingest CPG nodes and edges from Kafka directly into Neo4j, without routing graph data through
+Spark, and verify identity uniqueness.
+
+## Implementation approach
 
 ```text
-cpg.nodes.v1 + cpg.edges.v1 -> Neo4j Kafka Sink Connector -> Neo4j
+cpg.nodes.v1 / cpg.edges.v1 -> Neo4j Kafka Sink Connector -> Neo4j
 ```
 
-## Implementation
+`config/kafka/connect-neo4j-sink.json` subscribes to the node and edge topics. Its Cypher uses
+`MERGE` for `Repository`, `SourceFile`, `CPGNode`, and stable-ID `CPG_EDGE` relationships. Database
+constraints enforce unique CPG node IDs, source-file IDs, and repository names.
 
-The infrastructure initializes Neo4j uniqueness constraints for repository names, source-file
-IDs, and CPG node IDs. Parser events contain stable node and relationship IDs, repository identity,
-file path, file hash, schema version, and event time.
+Because node and edge topics may be observed in different orders, edge ingestion creates a
+placeholder endpoint when necessary. A later node event fills its properties and clears the
+placeholder flag. This avoids losing an edge merely because it arrived first.
 
-## Neo4j Kafka Sink Connector
+## Evidence and result
 
-`config/kafka/connect-neo4j-sink.json` subscribes only to `cpg.nodes.v1` and `cpg.edges.v1`. Node
-Cypher creates or updates `Repository`, `SourceFile`, and `CPGNode` entities. Edge Cypher creates a
-`CPG_EDGE` relationship carrying the logical edge type in its `type` property.
-
-The demo log records both the connector and its task in `RUNNING` state. This is runtime evidence
-that topology followed the direct Kafka sink path.
-
-## Idempotent Cypher Logic
-
-The connector uses `MERGE` with stable IDs rather than unconditional `CREATE`:
-
-```cypher
-MERGE (n:CPGNode {id: event.node_id})
-SET n.repo_name = event.repo_name,
-    n.file_path = event.file_path,
-    n.file_hash = event.file_hash,
-    n.type = event.node_type,
-    n.placeholder = false
-```
-
-For edges, missing endpoints are first represented by placeholders. This avoids silently losing a
-relationship if its edge event arrives before a node event on the other topic. The post-demo
-verifier reported zero unresolved placeholder nodes.
-
-`MERGE` is sufficient for unchanged replay, but a modified file can produce different line-based
-node IDs. The controlled replay therefore deletes CPG nodes for exactly the target repository and
-file before publishing replacement events. It does not clear the full graph.
-
-## Verification Queries
-
-The combined count shown in Neo4j Browser was obtained with:
-
-```cypher
-MATCH (n:CPGNode)
-WITH count(n) AS node_count
-MATCH ()-[r]->()
-RETURN node_count, count(r) AS edge_count;
-```
-
-Here `edge_count` includes all relationship types, including repository/file containment
-relationships. To count only parser topology, the verifier uses `MATCH ()-[r:CPG_EDGE]->()`.
-
-The graph sample query is:
-
-```cypher
-MATCH p=(a:CPGNode)-[r]->(b:CPGNode)
-RETURN p
-LIMIT 25;
-```
-
-## Evidence
+[`logs/kafka_connect_status.json`](logs/kafka_connect_status.json) records both connector and task
+as `RUNNING`.
 
 ```{figure} images/neo4j-counts.png
 :name: neo4j-counts
 :width: 90%
 
-Neo4j Browser records 114,785 CPG nodes and 434,215 total relationships after controlled replay.
+Neo4j global node and relationship count query.
 ```
-
-The tracked verifier log reports 319,309 `CPG_EDGE` relationships at the same stage. The higher
-Browser total is expected because its query counts every relationship type.
 
 ```{figure} images/neo4j-graph-view.png
 :name: neo4j-graph-view
 :width: 90%
 
-Neo4j Browser result for 25 CPG paths, including node and relationship properties.
+Neo4j Browser visualization of CPG topology and properties.
 ```
 
-After replay, the verifier recorded:
+The modified replay probe resolves to 14 nodes and 26 CPG edges. Identity checks return zero
+duplicate groups:
 
-```text
-Neo4j totals: nodes=114785 edges=319309
-Duplicate node IDs: 0
-Duplicate edge IDs: 0
-Unresolved placeholder nodes: 0
-Target file: nodes=13 edges=25
+```{figure} images/neo4j-duplicate_node.png
+:name: neo4j-duplicate-node
+:width: 90%
+
+Neo4j duplicate node-ID check: zero groups.
+```
+
+```{figure} images/neo4j-duplicate_edge.png
+:name: neo4j-duplicate-edge
+:width: 90%
+
+Neo4j duplicate edge-ID check: zero groups.
 ```
 
 ## Reflection
 
-Direct connector ingestion satisfies the required graph route and keeps Spark focused on
-metadata. Stable-ID `MERGE`, uniqueness constraints, and endpoint placeholders address duplicate
-and ordering risks. Modified-file idempotency needs the additional file-scoped replacement step;
-this simple strategy is effective for the lab but is less sophisticated than retaining versioned
-graph history.
+The direct connector path meets the graph-ingestion requirement and keeps Spark focused on
+metadata. Stable-ID `MERGE`, constraints, and placeholders address replay and cross-topic ordering.
+The optional file-scoped cleanup used in Task 6 replaces stale topology for one modified file; it
+is a verification protocol, not a stage in normal graph ingestion.

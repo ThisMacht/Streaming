@@ -1,90 +1,43 @@
-# Big Data Lab 04 - Spark Streaming
+# Lab 04: Incremental CPG Streaming
 
-This Jupyter Book presents our implementation for **Lab 04: Spark Streaming** in the Introduction to Big Data course.
+This Jupyter Book documents an incremental Code Property Graph (CPG) pipeline for the
+[`huggingface/accelerate`](https://github.com/huggingface/accelerate) Python repository. The lab
+goal is to discover source files, parse one file at a time, publish stable events, and maintain
+queryable graph and metadata views while supporting idempotent replay of one modified file.
 
-The lab focuses on building an incremental **Code Property Graph (CPG)** streaming pipeline for a real Python repository. Our selected repository is:
+## Pipeline at a glance
 
-```text
-https://github.com/huggingface/accelerate
-```
+1. Shallow-clone the repository and deterministically discover Python source files.
+2. Parse each file independently with Python's standard-library `ast` module.
+3. Publish keyed node, edge, metadata, and error events to Kafka.
+4. Send node and edge topics directly through the Neo4j Kafka Sink Connector to Neo4j.
+5. Consume the metadata topic with Spark Structured Streaming and write it through the MongoDB
+   Spark Connector to `cpg_lab.source_metadata`.
+6. Modify and replay only `src/accelerate/_lab_replay_probe.py`, then verify stable identity,
+   replacement, duplicate checks, and checkpoint resume.
 
-The system parses Python source files one by one, emits structured events to Apache Kafka, and persists the results into two database systems:
+Spark is used only on the metadata path; it is not part of Neo4j graph ingestion.
 
-- **Neo4j** stores the graph topology, including CPG nodes and edges.
-- **MongoDB** stores source code metadata, such as file hash, line count, function count, class count, import count, node count, edge count, and parse status.
+## Result summary
 
-## Pipeline Overview
-
-The main pipeline is:
-
-```text
-Python repository
-      |
-      v
-Parser Service
-      |
-      v
-Apache Kafka
-   |         |
-   v         v
-Neo4j       Spark Structured Streaming
-             |
-             v
-           MongoDB
-```
-
-The Parser Service publishes four categories of Kafka events:
-
-| Topic | Purpose |
+| Check | Result |
 |---|---|
-| `cpg.nodes.v1` | CPG node events |
-| `cpg.edges.v1` | CPG edge events |
-| `cpg.metadata.v1` | Source metadata events |
-| `cpg.errors.v1` | Parser error events |
+| Kafka | Four versioned topics created |
+| Neo4j connector | Connector and task `RUNNING` |
+| MongoDB identity | Unique `metadata_id_1` index exists |
+| Modified replay probe | 14 nodes, 26 edges in MongoDB and Neo4j |
+| Neo4j duplicate groups | 0 node IDs, 0 edge IDs |
+| Checkpoint resume | Passed; metadata remained 99 before and after |
+| Automated tests | 19 passed |
 
-Node and edge events are consumed directly by the **Neo4j Kafka Sink Connector**. Metadata events are consumed by **Spark Structured Streaming** and written to MongoDB.
+## Evidence and reading order
 
-## Report Structure
+Each task chapter presents its goal, implementation approach, concrete evidence, and a short
+reflection. Raw artifacts are kept beside the narrative:
 
-This book is organized according to the lab tasks:
+- `book/logs/` contains command, connector, database, replay, checkpoint, and test output;
+- `book/kafka/` contains captured Kafka key/value samples;
+- `book/images/` contains Neo4j, MongoDB, Spark, and architecture figures.
 
-1. **Repository Cloning and File Discovery**  
-   Clone the assigned repository and discover Python source files.
-
-2. **Incremental CPG Parser Service**  
-   Parse Python files incrementally and emit CPG events.
-
-3. **Kafka Topic Design**  
-   Design Kafka topics for nodes, edges, metadata, and parser errors.
-
-4. **Graph Topology Ingestion into Neo4j**  
-   Ingest CPG nodes and edges into Neo4j through the Neo4j Kafka Sink Connector.
-
-5. **Source Metadata Ingestion into MongoDB**  
-   Use Spark Structured Streaming to consume metadata events and write them to MongoDB.
-
-6. **Idempotent Replay Verification**  
-   Modify one Python source file, reprocess only that file, and verify that Neo4j and MongoDB reflect the updated state without duplication.
-
-## Evidence Included
-
-The report includes:
-
-- commands used to run each task;
-- parser and streaming logs;
-- Kafka event samples;
-- Neo4j query results;
-- MongoDB document views;
-- screenshots from Neo4j Browser and Mongo Express;
-- replay verification evidence;
-- reflections on issues encountered and how they were resolved.
-
-## Implementation Notes
-
-The implementation uses stable identifiers to support idempotent processing:
-
-- CPG nodes use deterministic node IDs.
-- CPG edges use deterministic edge IDs.
-- MongoDB metadata documents use stable `metadata_id`.
-
-Neo4j ingestion uses merge-based logic to avoid duplicate graph elements. MongoDB metadata ingestion uses stable-key upsert so that replaying a file updates the existing metadata document instead of inserting a duplicate.
+The architecture chapter explains the routing first. Tasks 1–6 then follow the lab workflow, the
+executed notebook collects intermediate outputs, and the conclusion summarizes results and limits.

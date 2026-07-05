@@ -1,9 +1,15 @@
 title: Big Data Lab 04 - Spark Streaming
-author: Team
+author: Team Vessel
 
 execute:
-  # This read-only evidence notebook is safe to execute during builds.
-  execute_notebooks: "cache"
+  # Preserve the tracked, already-executed evidence outputs. Re-execution would
+  # depend on runtime artifacts and is outside the documentation build.
+  execute_notebooks: "off"
+
+sphinx:
+  config:
+    exclude_patterns:
+      - README.md
 
 html:
   use_repository_button: true
