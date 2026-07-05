@@ -236,7 +236,7 @@ password: password123
   by `metadata_id`, so replay updates the stable document. PyMongo is used only by verification
   commands, never by the ingestion write path.
 * The checkpoint at `outputs/checkpoints/mongodb_metadata` preserves committed Kafka offsets.
-* If Neo4j shows `0` nodes, check Kafka Connect logs:
+* To inspect Neo4j connector logs:
 
   ```bash
   docker logs cpg-kafka-connect --tail=100
@@ -290,10 +290,10 @@ Run the parser, verification, and replay workflow in Terminal 2:
 Keep Terminal 1 running until Terminal 2 finishes the post-replay MongoDB and Neo4j checks. Stop
 Spark with `Ctrl+C` only after Terminal 2 reports completion.
 
-Raw logs are saved under `outputs/demo_logs/`; selected latest logs are copied to tracked
-`evidence/logs/`. See the complete
-[demo logging guide](markdowns/demo_logging.md) for the two-terminal workflow, replay behavior,
-and expected results.
+Raw logs are saved under `outputs/demo_logs/`. Selected evidence is stored under `evidence/` and
+mirrored into `book/logs/`, `book/kafka/`, and `book/images/` for the submitted Jupyter Book. See
+the complete [demo logging guide](markdowns/demo_logging.md) for the two-terminal workflow, replay
+behavior, and expected results.
 
 After infrastructure is ready, capture the non-visual configuration evidence:
 
@@ -304,8 +304,8 @@ After infrastructure is ready, capture the non-visual configuration evidence:
 ```
 
 **Expected output:** connector status, MongoDB index details, and one keyed sample for every CPG
-Kafka topic are refreshed under `evidence/` and copied into the book evidence where the scripts
-specify it.
+Kafka topic are refreshed under `evidence/`. The selected submission evidence is mirrored into
+`book/logs/`, `book/kafka/`, and `book/images/`.
 
 Kafka capture preserves raw JSON and companion `key=...` / `value=...` text files. Stop Terminal 1
 with `Ctrl+C` once, only after Terminal 2 finishes. The wrapper records an explicit user-stop
@@ -398,62 +398,87 @@ Also confirm that `book/images/` contains the Neo4j, MongoDB, Spark, and replay 
 the corresponding chapters render them as figures. Open `book/_build/html/index.html` after a local
 build, or inspect the published site at <https://thismacht.github.io/Streaming/>.
 
-## Troubleshooting
+## Reproducibility and operational notes
 
-### Kafka Connect is not healthy yet
+This section summarizes the checks used to reproduce the recorded demo and verify that each service
+is ready before running the end-to-end pipeline.
 
-Kafka Connect can take longer than Kafka or Neo4j to become ready. Wait a few seconds, then run:
+### Kafka Connect readiness
+
+Kafka Connect may take longer than Kafka or Neo4j to become ready after the Docker containers start.
+After initialization, verify the service state with:
 
 ```bash
 docker compose ps
 ./scripts/check_infra.sh
 ```
 
-Expected: `cpg-kafka-connect` becomes healthy and its REST endpoint responds.
+Expected result: `cpg-kafka-connect` is healthy, the Kafka Connect REST endpoint responds, and the
+Neo4j sink connector can be inspected through the REST API.
 
-### Neo4j connector is missing
+### Neo4j connector status
 
-If Kafka Connect does not list `neo4j-cpg-sink`, register it again:
+The graph ingestion path depends on the `neo4j-cpg-sink` connector. Verify its status with:
 
 ```bash
-curl -X POST http://localhost:8083/connectors \
-  -H "Content-Type: application/json" \
-  --data @config/kafka/connect-neo4j-sink.json
-
 curl http://localhost:8083/connectors/neo4j-cpg-sink/status
 ```
 
-Expected: the connector and task both report `RUNNING`. If the connector already exists but has an
-outdated configuration, delete it first as shown in Quick Start step 3, then register it again.
+Expected result: the connector and its task both report `RUNNING`.
 
-### Kafka topics are missing
-
-Create the topics and rerun the infrastructure check:
+If the connector configuration is intentionally changed during development, recreate it with:
 
 ```bash
-./scripts/create_topics.sh
+curl -X DELETE http://localhost:8083/connectors/neo4j-cpg-sink
+
+curl -X POST http://localhost:8083/connectors \
+  -H "Content-Type: application/json" \
+  --data @config/kafka/connect-neo4j-sink.json
+```
+
+### Kafka topic verification
+
+The pipeline uses four Kafka topics:
+
+```text
+cpg.nodes.v1
+cpg.edges.v1
+cpg.metadata.v1
+cpg.errors.v1
+```
+
+Verify the topic list with:
+
+```bash
 ./scripts/check_infra.sh
 ```
 
-Expected topics are `cpg.nodes.v1`, `cpg.edges.v1`, `cpg.metadata.v1`, and `cpg.errors.v1`.
+If the infrastructure state was reset, recreate the topics with:
 
-### Spark starts but MongoDB does not update
+```bash
+./scripts/create_topics.sh
+```
 
-Keep Terminal 1 running while Terminal 2 publishes metadata events. Check the checkpoint and the
-MongoDB verification output:
+### Spark and MongoDB metadata path
+
+Spark Structured Streaming should remain active while parser events are being published. The
+metadata path can be checked with:
 
 ```bash
 ls outputs/checkpoints/mongodb_metadata
 python -m src.verification.verify_mongodb_metadata
 ```
 
-Mongo Express is available at <http://localhost:8081>. Also confirm that Spark was submitted with
-both the Kafka SQL and MongoDB Spark Connector packages shown in Quick Start step 5.
+Mongo Express is available at <http://localhost:8081>. The Spark job should be submitted with both
+the Kafka SQL package and the MongoDB Spark Connector package shown in the Quick Start section.
 
-### Replay seems stale in Neo4j
+### Modified-file replay protocol
 
-Modified-file replay uses file-scoped Neo4j cleanup before publishing the replacement graph. Use
-the provided verification protocol instead of editing Neo4j manually:
+The modified-file replay uses a file-scoped Neo4j cleanup step before publishing the replacement
+graph for the replay probe. The replacement graph events are still sent through Kafka and consumed
+by the Neo4j Kafka Sink Connector.
+
+Use the recorded verification protocol:
 
 ```bash
 python -m src.verification.replay_one_file \
@@ -463,18 +488,18 @@ python -m src.verification.replay_one_file \
   --wait-seconds 10
 ```
 
-This is intentionally a lab verification workflow, not a production-grade event-driven deletion
-lifecycle. A production design could use tombstone events or generation-based replacement.
+This is a lab verification protocol for changed-file replacement. A production design could replace
+the direct cleanup step with tombstone events or generation-based replacement.
 
-### Do not reset or stop Spark during replay verification
+### Reset and Spark timing
 
-Do not run `reset_demo_state.sh` while Terminal 1 is consuming metadata. Keep Spark running until
-Terminal 2 completes its final replay and database checks. Stop Spark once with `Ctrl+C` only after
-Terminal 2 reports completion; repeated forced shutdown can produce a misleading Py4J traceback.
+Run `reset_demo_state.sh` only before starting the two-terminal demo, while Spark is stopped. During
+the demo, keep Terminal 1 running until Terminal 2 completes the replay and database verification
+steps. Stop Spark once with `Ctrl+C` after the final checks are complete.
 
-### Jupyter Book does not show screenshots
+### Jupyter Book figure rendering
 
-Confirm that every image exists and is referenced with a MyST figure block, for example:
+The submitted Jupyter Book renders screenshots through MyST figure blocks, for example:
 
 ````md
 ```{figure} images/neo4j-counts.png
@@ -485,15 +510,19 @@ Neo4j count query after baseline ingestion.
 ```
 ````
 
-Then rebuild:
+To rebuild the book locally:
 
 ```bash
 jupyter-book clean book
 jupyter-book build book
 ```
 
-### GitHub Pages does not update
+### GitHub Pages deployment
 
-After pushing, inspect the GitHub Actions workflow and Pages deployment status. The workflow builds
-the book and deploys `book/_build/html` as a Pages artifact. Do not commit `book/_build` unless the
-course explicitly requires generated HTML.
+The GitHub Actions workflow builds the Jupyter Book and deploys `book/_build/html` as a GitHub Pages
+artifact. The generated `_build` directory is a local build artifact and is not committed to the
+repository.
+
+After pushing changes, verify the published site:
+
+<https://thismacht.github.io/Streaming/>

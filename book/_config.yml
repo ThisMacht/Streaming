@@ -1,6 +1,6 @@
 title: Big Data Lab 04 - Spark Streaming
 author: Team Vessel
-copyright: 2026
+copyright: "2026"
 
 execute:
   # Preserve the tracked, already-executed evidence outputs. Re-execution would
