@@ -274,3 +274,62 @@ org.mongodb.spark#mongo-spark-connector_2.12 added as a dependency
 26/07/05 12:34:29 WARN CaseInsensitiveStringMap: Converting duplicated key idfieldlist into CaseInsensitiveStringMap.
 26/07/05 12:34:29 WARN CaseInsensitiveStringMap: Converting duplicated key upsertDocument into CaseInsensitiveStringMap.
 26/07/05 12:34:29 WARN CaseInsensitiveStringMap: Converting duplicated key operationType into CaseInsensitiveStringMap.
+ERROR:root:Exception while sending command.
+Traceback (most recent call last):
+  File "/home/macht/Dev/HCMUS/Streaming/.venv/lib/python3.12/site-packages/pyspark/python/lib/py4j-0.10.9.7-src.zip/py4j/clientserver.py", line 511, in send_command
+    answer = smart_decode(self.stream.readline()[:-1])
+                          ^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: reentrant call inside <_io.BufferedReader name=4>
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/macht/Dev/HCMUS/Streaming/.venv/lib/python3.12/site-packages/pyspark/python/lib/py4j-0.10.9.7-src.zip/py4j/java_gateway.py", line 1038, in send_command
+    response = connection.send_command(command)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/macht/Dev/HCMUS/Streaming/.venv/lib/python3.12/site-packages/pyspark/python/lib/py4j-0.10.9.7-src.zip/py4j/clientserver.py", line 539, in send_command
+    raise Py4JNetworkError(
+py4j.protocol.Py4JNetworkError: Error while sending or receiving
+ERROR:root:Exception while sending command.
+Traceback (most recent call last):
+  File "/home/macht/Dev/HCMUS/Streaming/.venv/lib/python3.12/site-packages/pyspark/python/lib/py4j-0.10.9.7-src.zip/py4j/clientserver.py", line 511, in send_command
+    answer = smart_decode(self.stream.readline()[:-1])
+                          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/macht/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/socket.py", line 720, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/macht/Dev/HCMUS/Streaming/.venv/lib/python3.12/site-packages/pyspark/python/lib/pyspark.zip/pyspark/context.py", line 381, in signal_handler
+    self.cancelAllJobs()
+  File "/home/macht/Dev/HCMUS/Streaming/.venv/lib/python3.12/site-packages/pyspark/python/lib/pyspark.zip/pyspark/context.py", line 2446, in cancelAllJobs
+    self._jsc.sc().cancelAllJobs()
+    ^^^^^^^^^^^^^^
+  File "/home/macht/Dev/HCMUS/Streaming/.venv/lib/python3.12/site-packages/pyspark/python/lib/py4j-0.10.9.7-src.zip/py4j/java_gateway.py", line 1322, in __call__
+    return_value = get_return_value(
+                   ^^^^^^^^^^^^^^^^^
+  File "/home/macht/Dev/HCMUS/Streaming/.venv/lib/python3.12/site-packages/pyspark/python/lib/pyspark.zip/pyspark/errors/exceptions/captured.py", line 179, in deco
+    return f(*a, **kw)
+           ^^^^^^^^^^^
+  File "/home/macht/Dev/HCMUS/Streaming/.venv/lib/python3.12/site-packages/pyspark/python/lib/py4j-0.10.9.7-src.zip/py4j/protocol.py", line 334, in get_return_value
+    raise Py4JError(
+py4j.protocol.Py4JError: An error occurred while calling o15.sc
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/macht/Dev/HCMUS/Streaming/.venv/lib/python3.12/site-packages/pyspark/python/lib/py4j-0.10.9.7-src.zip/py4j/java_gateway.py", line 1038, in send_command
+    response = connection.send_command(command)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/macht/Dev/HCMUS/Streaming/.venv/lib/python3.12/site-packages/pyspark/python/lib/py4j-0.10.9.7-src.zip/py4j/clientserver.py", line 539, in send_command
+    raise Py4JNetworkError(
+py4j.protocol.Py4JNetworkError: Error while sending or receiving
+Traceback (most recent call last):
+  File "/home/macht/Dev/HCMUS/Streaming/src/spark_jobs/metadata_to_mongodb.py", line 105, in <module>
+    main()
+  File "/home/macht/Dev/HCMUS/Streaming/src/spark_jobs/metadata_to_mongodb.py", line 101, in main
+    query.awaitTermination()
+  File "/home/macht/Dev/HCMUS/Streaming/.venv/lib/python3.12/site-packages/pyspark/python/lib/pyspark.zip/pyspark/sql/streaming/query.py", line 221, in awaitTermination
+  File "/home/macht/Dev/HCMUS/Streaming/.venv/lib/python3.12/site-packages/pyspark/python/lib/py4j-0.10.9.7-src.zip/py4j/java_gateway.py", line 1322, in __call__
+  File "/home/macht/Dev/HCMUS/Streaming/.venv/lib/python3.12/site-packages/pyspark/python/lib/pyspark.zip/pyspark/errors/exceptions/captured.py", line 179, in deco
+  File "/home/macht/Dev/HCMUS/Streaming/.venv/lib/python3.12/site-packages/pyspark/python/lib/py4j-0.10.9.7-src.zip/py4j/protocol.py", line 334, in get_return_value
+py4j.protocol.Py4JError: An error occurred while calling o68.awaitTermination
+Spark streaming job was stopped by user after verification completed.
