@@ -33,8 +33,8 @@ _site/
 .env.*.local
 
 # Logs
-logs/
-*.log
+# logs/
+# .log
 outputs/demo_logs/*.log
 !outputs/demo_logs/.gitkeep
 

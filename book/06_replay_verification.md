@@ -1,4 +1,4 @@
-# Task 6: Idempotent Modified-File Replay
+# Task 6: Modified-File Replay Verification
 
 ## Goal
 
@@ -16,8 +16,8 @@ src/accelerate/_lab_replay_probe.py
 1. Parse and publish the full baseline manifest.
 2. Verify baseline MongoDB and Neo4j state.
 3. Modify only the replay probe.
-4. As a file-scoped verification protocol, optionally remove old Neo4j topology for that exact
-   repository/file before replacement.
+4. As a file-scoped verification protocol, remove old Neo4j topology for that exact
+   repository/file before publishing its replacement.
 5. Parse and publish only the modified probe.
 6. Wait for the Neo4j connector and running Spark query, then verify both stores.
 7. Check duplicate node IDs and edge IDs.
@@ -33,6 +33,9 @@ python -m src.verification.replay_one_file \
 
 Neo4j cleanup is direct maintenance scoped to this one file. Replacement graph events still travel
 Kafka → Neo4j Connector → Neo4j. The cleanup does not change the main ingestion architecture.
+This modified-file replay is therefore a file-scoped replacement, not a claim of pure idempotent
+replay without cleanup. Reprocessing unchanged content is idempotent through stable IDs together
+with Neo4j `MERGE` and MongoDB upsert.
 
 ## Evidence and result
 
@@ -45,6 +48,41 @@ Kafka → Neo4j Connector → Neo4j. The cleanup does not change the main ingest
 | Checkpoint artifacts | 25 before, 25 after |
 | Metadata documents | 99 before, 99 after |
 | Checkpoint result | `PASSED checkpoint resumed without duplicating unchanged metadata` |
+
+## Neo4j replay verification
+
+After the baseline ingestion was allowed to finish, we replayed exactly one modified file:
+
+```text
+src/accelerate/_lab_replay_probe.py
+```
+
+The target-file graph in Neo4j changed as follows:
+
+| Metric | Before replay | After replay |
+|---|---:|---:|
+| CPG nodes | 14 | 14 |
+| CPG edges | 27 | 26 |
+
+The controlled source modification changed the generated CPG structure, so the decrease from 27
+to 26 edges is expected. Neo4j reflects the replacement graph state for that file, and the
+identity checks show that republishing did not create duplicate graph identifiers.
+
+| Check | Result |
+|---|---:|
+| Duplicate `CPGNode.id` groups | 0 |
+| Duplicate `CPG_EDGE.id` groups | 0 |
+
+The structured replay log records:
+
+```text
+neo4j_target_nodes_before=14
+neo4j_target_nodes_after=14
+neo4j_target_edges_before=27
+neo4j_target_edges_after=26
+duplicate_node_id_groups=0
+duplicate_edge_id_groups=0
+```
 
 ```{figure} images/mongo-replay-after.png
 :name: mongo-replay-after

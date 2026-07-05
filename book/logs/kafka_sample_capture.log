@@ -1,0 +1,9 @@
+Captured cpg.nodes.v1 -> evidence/kafka/nodes_sample.json and evidence/kafka/node-sample.txt
+Captured cpg.edges.v1 -> evidence/kafka/edges_sample.json and evidence/kafka/edge-sample.txt
+Captured cpg.metadata.v1 -> evidence/kafka/metadata_sample.json and evidence/kafka/metadata-sample.txt
+Captured cpg.errors.v1 -> evidence/kafka/errors_sample.json and evidence/kafka/error-sample.txt
+Kafka sample capture complete:
+  evidence/kafka/edges_sample.json
+  evidence/kafka/errors_sample.json
+  evidence/kafka/metadata_sample.json
+  evidence/kafka/nodes_sample.json

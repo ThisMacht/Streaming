@@ -1,0 +1,18 @@
+Creating Kafka topics...
+WARNING: Due to limitations in metric names, topics with a period ('.') or underscore ('_') could collide. To avoid issues it is best to use either, but not both.
+Created topic cpg.nodes.v1.
+WARNING: Due to limitations in metric names, topics with a period ('.') or underscore ('_') could collide. To avoid issues it is best to use either, but not both.
+Created topic cpg.edges.v1.
+WARNING: Due to limitations in metric names, topics with a period ('.') or underscore ('_') could collide. To avoid issues it is best to use either, but not both.
+Created topic cpg.metadata.v1.
+WARNING: Due to limitations in metric names, topics with a period ('.') or underscore ('_') could collide. To avoid issues it is best to use either, but not both.
+Created topic cpg.errors.v1.
+Kafka topics:
+__consumer_offsets
+connect-configs
+connect-offsets
+connect-statuses
+cpg.edges.v1
+cpg.errors.v1
+cpg.metadata.v1
+cpg.nodes.v1
